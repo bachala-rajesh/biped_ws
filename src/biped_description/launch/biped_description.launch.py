@@ -16,20 +16,26 @@ import xacro
 
 def generate_launch_description() -> LaunchDescription:
 
-
+    ##################### 
     # Launch configurations
+    ##################### 
     use_sim_time = LaunchConfiguration("use_sim_time")
     use_gui = LaunchConfiguration('use_gui')
     
 
-    ##################### urdf related ############################
+    ##################### 
+    # urdf related 
+    #####################
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('biped_description'))
-    xacro_file = os.path.join(pkg_path,'urdf','biped.urdf.xacro')
+    xacro_file = os.path.join(pkg_path,'urdf','biped_with_control.urdf.xacro')
     robot_description_config = xacro.process_file(xacro_file)
     robot_description = {'robot_description': robot_description_config.toxml()}
 
-    ############################# Nodes ########################################
+
+    ##################### 
+    # Nodes
+    ##################### 
     # Robot State Publisher
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -47,6 +53,7 @@ def generate_launch_description() -> LaunchDescription:
         condition=IfCondition(use_gui)
     )
     
+    
 
  
     ############################## creating LaunchDescription
@@ -63,6 +70,7 @@ def generate_launch_description() -> LaunchDescription:
                 default_value='true',
                 description='Whether to show joint_state_publisher_gui sliders'
             ),
+            
             
             robot_state_publisher_node,
             joint_state_publisher_gui,

@@ -18,6 +18,7 @@ def generate_launch_description() -> LaunchDescription:
     # get packages path 
     #####################
     pkg_biped_bringup = get_package_share_directory("biped_bringup_sim")
+    pkg_biped_description = get_package_share_directory("biped_description")
     
     
     
@@ -35,7 +36,7 @@ def generate_launch_description() -> LaunchDescription:
     
     # simulation robot node
     sim_robot_node = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(pkg_biped_bringup, "launch", "sim_biped.launch.py")),
+        PythonLaunchDescriptionSource(os.path.join(pkg_biped_description, "launch", "biped_description.launch.py")),
         launch_arguments={
             "use_gui": use_gui,
             "use_sim_time": use_sim_time,
@@ -93,6 +94,9 @@ def generate_launch_description() -> LaunchDescription:
         emulate_tty=True,
         output="screen",
     )
+    
+    
+    
     
     
 
