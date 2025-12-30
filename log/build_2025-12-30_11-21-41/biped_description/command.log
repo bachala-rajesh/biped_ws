@@ -1,0 +1,6 @@
+Invoking command in '/home/mira/biped_ws/build/biped_description': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mira/biped_ws/src/biped_description -DCMAKE_INSTALL_PREFIX=/home/mira/biped_ws/install/biped_description
+Invoked command in '/home/mira/biped_ws/build/biped_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mira/biped_ws/src/biped_description -DCMAKE_INSTALL_PREFIX=/home/mira/biped_ws/install/biped_description
+Invoking command in '/home/mira/biped_ws/build/biped_description': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mira/biped_ws/build/biped_description -- -j32 -l32
+Invoked command in '/home/mira/biped_ws/build/biped_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mira/biped_ws/build/biped_description -- -j32 -l32
+Invoking command in '/home/mira/biped_ws/build/biped_description': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mira/biped_ws/build/biped_description
+Invoked command in '/home/mira/biped_ws/build/biped_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mira/biped_ws/build/biped_description

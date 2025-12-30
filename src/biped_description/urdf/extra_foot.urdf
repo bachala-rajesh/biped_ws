@@ -1,0 +1,51 @@
+<joint name="left_foot_fixed" type="fixed">
+    <origin xyz="0 0 -0.20" rpy="0 0 0"/> <parent link="left_knee_link"/>
+    <child link="left_foot"/>
+  </joint>
+
+  <link name="left_foot">
+    <inertial>
+      <mass value="0.01"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+
+    <visual>
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="right_foot_fixed" type="fixed">
+    <origin xyz="0 0 -0.20" rpy="0 0 0"/> <parent link="right_knee_link"/>
+    <child link="right_foot"/>
+  </joint>
+
+  <link name="right_foot">
+    <inertial>
+      <mass value="0.01"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+    </collision>
+  </link>
