@@ -3,7 +3,7 @@
   name="bipedal_robot">
 
   <!-- Define mesh directory variable -->
-  <xacro:property name="mesh_dir" value="package://biped_description/meshes"/>
+  <xacro:property name="mesh_dir" value="model://biped_description/meshes"/>
 
   <link
     name="base_link">
