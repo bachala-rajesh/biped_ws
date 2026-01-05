@@ -21,7 +21,7 @@ def generate_launch_description():
 
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('biped_description'))
-    xacro_file = os.path.join(pkg_path,'urdf','biped.urdf.xacro')
+    xacro_file = os.path.join(pkg_path,'urdf','biped.urdf')
     robot_description_config = xacro.process_file(xacro_file)
     robot_description = {'robot_description': robot_description_config.toxml()}
 

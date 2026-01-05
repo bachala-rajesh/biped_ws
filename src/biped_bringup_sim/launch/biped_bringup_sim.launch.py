@@ -10,6 +10,7 @@ from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.conditions import IfCondition
+from launch.actions import AppendEnvironmentVariable
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -19,6 +20,14 @@ def generate_launch_description() -> LaunchDescription:
     #####################
     pkg_biped_bringup = get_package_share_directory("biped_bringup_sim")
     pkg_biped_description = get_package_share_directory("biped_description")
+    
+    biped_description_share_path = os.path.dirname(pkg_biped_description)
+    
+    # Set GAZEBO resource path to include biped_description package
+    set_gazebo_resource_path = AppendEnvironmentVariable(
+        name='IGN_GAZEBO_RESOURCE_PATH',
+        value=biped_description_share_path
+    )
     
     
     
@@ -106,6 +115,8 @@ def generate_launch_description() -> LaunchDescription:
     
     return LaunchDescription(
         [
+            set_gazebo_resource_path,
+            
             DeclareLaunchArgument(
                 "use_sim_time",
                 default_value="true",

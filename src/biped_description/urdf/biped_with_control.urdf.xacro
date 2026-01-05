@@ -6,6 +6,6 @@
     <xacro:include filename="$(find biped_description)/urdf/biped_sim_ros2_control.urdf" />
 
     <!-- robot description -->
-    <xacro:include filename="$(find biped_description)/urdf/biped.urdf.xacro" />
+    <xacro:include filename="$(find biped_description)/urdf/biped.urdf" />
     
 </robot>
