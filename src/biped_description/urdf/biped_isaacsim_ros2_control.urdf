@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+  <robot name="bipedal_robot">
+    <ros2_control name="topic_based_isaacsim_ros2_control" type="system">
+      <hardware>
+        <plugin>topic_based_ros2_control/TopicBasedSystem</plugin>
+        <param name="joint_commands_topic">/joint_commands</param>
+        <param name="joint_states_topic">/joint_states</param>
+      </hardware>
+
+      <joint name="left_hip_pitch_joint">
+        <command_interface name="position" />
+        <state_interface name="position"/>
+      </joint>
+      <joint name="left_hip_roll_joint">      
+        <command_interface name="position" />
+        <state_interface name="position"/>
+      </joint>
+      <joint name="left_knee_joint">      
+        <command_interface name="position" />
+        <state_interface name="position"/>
+      </joint>
+      <joint name="right_hip_pitch_joint">
+        <command_interface name="position" />
+        <state_interface name="position"/>
+      </joint>
+      <joint name="right_hip_roll_joint">
+        <command_interface name="position" />
+        <state_interface name="position"/>
+      </joint>
+      <joint name="right_knee_joint">
+        <command_interface name="position" />
+        <state_interface name="position"/>
+      </joint>
+
+    </ros2_control>
+
+
+  </robot>

@@ -49,6 +49,7 @@ def generate_launch_description() -> LaunchDescription:
         launch_arguments={
             "use_gui": use_gui,
             "use_sim_time": use_sim_time,
+            "sim_mode": "gazebo",
         }.items(),
     )
     

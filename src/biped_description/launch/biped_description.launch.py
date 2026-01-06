@@ -12,6 +12,7 @@ from launch_ros.substitutions import FindPackageShare
 from launch.conditions import IfCondition
 from launch_ros.parameter_descriptions import ParameterValue
 import xacro
+from launch.actions import LogInfo
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -21,6 +22,7 @@ def generate_launch_description() -> LaunchDescription:
     ##################### 
     use_sim_time = LaunchConfiguration("use_sim_time")
     use_gui = LaunchConfiguration('use_gui')
+    sim_mode = LaunchConfiguration('sim_mode')
     
 
     ##################### 
@@ -29,8 +31,19 @@ def generate_launch_description() -> LaunchDescription:
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('biped_description'))
     xacro_file = os.path.join(pkg_path,'urdf','biped_with_control.urdf.xacro')
-    robot_description_config = xacro.process_file(xacro_file)
-    robot_description = {'robot_description': robot_description_config.toxml()}
+    robot_description_content = Command([
+        PathJoinSubstitution([FindExecutable(name="xacro")]), 
+        " ",
+        xacro_file,
+        " ",
+        "sim_mode:=", 
+        sim_mode
+    ])
+
+    #Wrap it in ParameterValue 
+    robot_description = {
+        'robot_description': ParameterValue(robot_description_content, value_type=str)
+    }
 
 
     ##################### 
@@ -41,7 +54,10 @@ def generate_launch_description() -> LaunchDescription:
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        parameters=[robot_description],
+        parameters=[
+            robot_description,
+            {'use_sim_time': use_sim_time}
+            ],
         emulate_tty=True,
     )
     
@@ -50,6 +66,7 @@ def generate_launch_description() -> LaunchDescription:
         package='joint_state_publisher_gui',
         executable='joint_state_publisher_gui',
         name='joint_state_publisher_gui',
+        parameters= [{'use_sim_time': use_sim_time}],
         condition=IfCondition(use_gui)
     )
     
@@ -71,8 +88,18 @@ def generate_launch_description() -> LaunchDescription:
                 description='Whether to show joint_state_publisher_gui sliders'
             ),
             
+            DeclareLaunchArgument(
+                'sim_mode',
+                default_value='isaacsim',
+                description='Simulation mode: isaacsim or gazebo'
+            ),
+            
+            # log info about sim_mode
+            LogInfo(msg=['[DEBUG] sim_mode is: ', LaunchConfiguration('sim_mode')]),
             
             robot_state_publisher_node,
             joint_state_publisher_gui,
+            
+            
         ]
     )

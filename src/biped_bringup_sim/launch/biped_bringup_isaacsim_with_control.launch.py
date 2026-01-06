@@ -34,16 +34,15 @@ def generate_launch_description() -> LaunchDescription:
     
     # simulation robot bringup node
     sim_robot_bringup_node = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(pkg_biped_bringup, "launch", "biped_bringup_sim.launch.py")),
-        launch_arguments={
-            "use_sim_time": use_sim_time,
-        }.items(),
+        PythonLaunchDescriptionSource(os.path.join(pkg_biped_bringup, "launch", "biped_bringup_sim_isaacsim.launch.py")),
     )
     
     #control node
     control_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(pkg_biped_control, "launch", "biped_control.launch.py")),
-        
+        launch_arguments={
+            "use_sim_time": use_sim_time,
+        }.items(),
     ) 
     
 
@@ -56,8 +55,9 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 "use_sim_time",
                 default_value="true",
-                description="Use simulation (Gazebo) clock if true",
+                description="Use simulation clock if true",
             ),
+            
             
             sim_robot_bringup_node,
             control_node,

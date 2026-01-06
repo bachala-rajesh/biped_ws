@@ -2,8 +2,16 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro"
   name="bipedal_robot">
 
-    <!-- ros2 control for simulated robot in ignition -->
-    <xacro:include filename="$(find biped_description)/urdf/biped_sim_ros2_control.urdf" />
+    <xacro:arg name="sim_mode" default="isaacsim" />
+
+    <!-- ros2 control for simulated robot in gazebo ignition -->
+    <xacro:if value="${'$(arg sim_mode)' == 'gazebo'}">
+      <xacro:include filename="$(find biped_description)/urdf/biped_gazebo_ros2_control.urdf" />
+    </xacro:if>
+
+    <xacro:if value="${'$(arg sim_mode)' == 'isaacsim'}">
+      <xacro:include filename="$(find biped_description)/urdf/biped_isaacsim_ros2_control.urdf" />
+    </xacro:if>
 
     <!-- robot description -->
     <xacro:include filename="$(find biped_description)/urdf/biped.urdf.xacro" />
