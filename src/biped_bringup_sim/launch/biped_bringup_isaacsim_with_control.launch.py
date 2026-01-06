@@ -25,6 +25,7 @@ def generate_launch_description() -> LaunchDescription:
     # launch arguments and configurations related 
     #####################
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
+    sim_mode = LaunchConfiguration("sim_mode", default="isaacsim")
 
 
 
@@ -42,6 +43,7 @@ def generate_launch_description() -> LaunchDescription:
         PythonLaunchDescriptionSource(os.path.join(pkg_biped_control, "launch", "biped_control.launch.py")),
         launch_arguments={
             "use_sim_time": use_sim_time,
+            "sim_mode": sim_mode,
         }.items(),
     ) 
     

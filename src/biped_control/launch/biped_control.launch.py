@@ -11,6 +11,7 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.conditions import IfCondition
 from launch.actions import TimerAction
+from launch.substitutions import PythonExpression
 
 
 
@@ -28,6 +29,8 @@ def generate_launch_description():
     # Configurations
     # ###############
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    sim_mode = LaunchConfiguration('sim_mode', default='isaacsim')
+    
 
     
     
@@ -35,8 +38,6 @@ def generate_launch_description():
     # ###############
     # nodes
     # ###############
-
-    
     #controller manager node
     controller_manager_node = Node(
         package="controller_manager",
@@ -45,8 +46,16 @@ def generate_launch_description():
             controllers_yaml,
             {"use_sim_time": use_sim_time},
         ],
+        remappings=[
+            ("~/robot_description", "/robot_description")
+        ],
         output="screen",
         emulate_tty=True,
+        # Only launch this node if not in Gazebo sim mode. 
+        # Gazebo launches its own controller manager mentioned in the urdf file.
+        condition=IfCondition(
+            PythonExpression(["'", sim_mode, "' != 'gazebo'"])
+        )
     )
 
     # Spawner nodes
@@ -56,6 +65,9 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
         parameters=[{"use_sim_time": use_sim_time}],
         output="screen",
+        condition=IfCondition(
+            PythonExpression(["'", sim_mode, "' != 'isaacsim'"])
+        )
     )
 
     trajectory_controller_spawner = Node(
@@ -100,10 +112,16 @@ def generate_launch_description():
             default_value='true',
             description='Use simulation (Gazebo) clock if true'
         ),
+        DeclareLaunchArgument(
+            'sim_mode',
+            default_value='isaacsim',
+            description='Simulation mode: gazebo or isaacsim',
+        ),
+        
 
         controller_manager_node,
         TimerAction(
-            period=2.0,
+            period=5.0,
             actions=controller_spawners
         ),
     ])

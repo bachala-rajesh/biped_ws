@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
   <robot name="bipedal_robot">
     <ros2_control name="gazebo_ros2_control" type="system">
+      <!-- the hardware plugin is loaded by Gazebo controller manager -->
       <hardware>
         <plugin>gz_ros2_control/GazeboSimSystem</plugin>
       </hardware>
@@ -34,7 +35,7 @@
 
 
 
-
+    <!-- controller manager in gazebo -->
     <gazebo>
       <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
         <parameters>$(find biped_control)/config/biped_controllers.yaml</parameters>

@@ -25,6 +25,7 @@ def generate_launch_description() -> LaunchDescription:
     # launch arguments and configurations related 
     #####################
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
+    sim_mode = LaunchConfiguration("sim_mode", default="gazebo")
 
 
 
@@ -42,6 +43,7 @@ def generate_launch_description() -> LaunchDescription:
         PythonLaunchDescriptionSource(os.path.join(pkg_biped_control, "launch", "biped_control.launch.py")),
         launch_arguments={
             "use_sim_time": use_sim_time,
+            "sim_mode": sim_mode,
         }.items(),
     ) 
     
@@ -57,7 +59,11 @@ def generate_launch_description() -> LaunchDescription:
                 default_value="true",
                 description="Use simulation (Gazebo) clock if true",
             ),
-            
+            DeclareLaunchArgument(
+                "sim_mode",
+                default_value="gazebo",
+                description="Simulation mode: gazebo or isaacsim",
+            ),
             
             sim_robot_bringup_node,
             control_node,
