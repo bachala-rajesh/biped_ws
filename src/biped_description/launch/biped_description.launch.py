@@ -30,7 +30,7 @@ def generate_launch_description() -> LaunchDescription:
     #####################
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('biped_description'))
-    xacro_file = os.path.join(pkg_path,'urdf','biped_with_control.urdf.xacro')
+    xacro_file = os.path.join(pkg_path,'urdf','biped_with_sensors_control.urdf.xacro')
     robot_description_content = Command([
         PathJoinSubstitution([FindExecutable(name="xacro")]), 
         " ",

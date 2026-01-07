@@ -65,6 +65,7 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
         parameters=[{"use_sim_time": use_sim_time}],
         output="screen",
+        # Isaacsim publishes its own joint states, so no need to spawn this broadcaster.
         condition=IfCondition(
             PythonExpression([
                 "('", sim_mode, "' != 'isaacsim')"

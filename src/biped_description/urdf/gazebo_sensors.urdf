@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+  <robot name="bipedal_robot">
+    
+    <gazebo reference="imu_link">
+        <sensor name="imu_sensor" type="imu">
+            <always_on>true</always_on>
+            <update_rate>400</update_rate>
+            <visualize>false</visualize>
+
+            <imu>
+                <angular_velocity>
+                    <x><noise type="gaussian"/></x>
+                    <y><noise type="gaussian"/></y>
+                    <z><noise type="gaussian"/></z>
+                </angular_velocity>
+                <linear_acceleration>
+                    <x><noise type="gaussian"/></x>
+                    <y><noise type="gaussian"/></y>
+                    <z><noise type="gaussian"/></z>
+                </linear_acceleration>
+            </imu>
+
+            <topic>/imu</topic>
+        </sensor>
+    </gazebo>
+
+    
+  </robot>

@@ -28,7 +28,10 @@
       name="gz::sim::systems::SceneBroadcaster">
     </plugin>
 
-
+    <!-- imu sensor plugin -->
+    <plugin filename="ignition-gazebo-imu-system"
+          name="ignition::gazebo::systems::Imu">
+    </plugin>
 
 
 

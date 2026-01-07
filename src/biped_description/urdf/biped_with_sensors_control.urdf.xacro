@@ -4,9 +4,10 @@
 
     <xacro:arg name="sim_mode" default="isaacsim" />
 
-    <!-- ros2 control for simulated robot in gazebo ignition -->
+    <!-- ros2 control and sensors for simulated robot in gazebo ignition -->
     <xacro:if value="${'$(arg sim_mode)' == 'gazebo'}">
       <xacro:include filename="$(find biped_description)/urdf/biped_gazebo_ros2_control.urdf" />
+      <xacro:include filename="$(find biped_description)/urdf/gazebo_sensors.urdf" />
     </xacro:if>
 
     <xacro:if value="${'$(arg sim_mode)' == 'isaacsim'}">
