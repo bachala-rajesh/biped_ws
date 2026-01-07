@@ -6,3 +6,5 @@ __pycache__/
 *.so
 .vscode/
 
+src/temp/
+src/biped_bringup_sim/biped_bringup_sim/gui_sliders_biped_joints_control.py

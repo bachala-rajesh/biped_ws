@@ -67,7 +67,7 @@ def generate_launch_description():
         output="screen",
         condition=IfCondition(
             PythonExpression([
-                "('", sim_mode, "' != 'gazebo') and ('", sim_mode, "' != 'isaacsim')"
+                "('", sim_mode, "' != 'isaacsim')"
             ])
         )
     )
