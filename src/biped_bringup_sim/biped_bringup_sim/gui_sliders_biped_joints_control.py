@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple PyQt6 GUI with sliders for a 6-DOF robotic arm.
-
-Joints:
-- shoulder_pan
-- shoulder_lift
-- elbow_flex
-- wrist_flex
-- wrist_roll
-- gripper
+Simple PyQt6 GUI with sliders for a 6-DOF bipedal robot's joints.
 
 
 """

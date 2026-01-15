@@ -26,6 +26,13 @@ endif()
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
+# Install Python executables (ROS nodes)
+install(PROGRAMS
+  biped_bringup_sim/gui_sliders_biped_joints_control.py
+  
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 # Install files
 install(DIRECTORY
   launch
