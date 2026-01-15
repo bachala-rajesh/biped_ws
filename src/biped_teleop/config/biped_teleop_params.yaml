@@ -1,0 +1,54 @@
+biped_teleop_node:
+  ros__parameters:
+    # ==========================================
+    # LAYER 1: HARDWARE LAYOUT (The Physical Controller)
+    # ==========================================
+    joy_layout:
+      axes:
+        left_stick_y: 1       # Up/Down
+        left_stick_x: 0       # Left/Right
+        right_stick_y: 3      # Up/Down
+        right_stick_x: 4      # Left/Right
+        dpad_x: 6             # Left/Right Arrows
+        dpad_y: 7             # Up/Down Arrows
+        l2_trigger: 2         # Trigger
+        r2_trigger: 5         # Trigger
+
+      buttons:
+        cross: 0
+        circle: 1
+        square: 2
+        triangle: 3
+        start: 7
+        select: 6
+        l1_trigger: 4
+        r1_trigger: 5
+
+    # ==========================================
+    # LAYER 2: CONTROL MAP (Robot Actions)
+    # ==========================================
+    control_map:
+      # Safety
+      deadman_switch: "r1_trigger"         # Must hold this to move
+      
+      # Locomotion (Refer to names in Layer 1)
+      joy_walk_x: "left_stick_y"       # Forward/Backward
+      button_walk_x: "dpad_y"        # Forward/Backward (D-Pad)
+      joy_walk_y: "left_stick_x"       # Strafe Left/Right
+      button_walk_y: "dpad_x"        # Strafe Left/Right (D-Pad)
+      turn_z: "right_stick_y"      # Turn Left/Right
+      
+      # Actions
+      stand_cmd: "triangle"        # Press to Stand
+      sit_cmd: "cross"             # Press to Sit
+
+    # ==========================================
+    # SCALES (Max Speeds)
+    # ==========================================
+    scales:
+      walk_x_scale: 1.0
+      walk_y_scale: 1.0
+      turn_z_scale: 1.0
+
+
+
