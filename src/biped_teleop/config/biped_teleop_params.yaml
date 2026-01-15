@@ -39,8 +39,10 @@ biped_teleop_node:
       turn_z: "right_stick_y"      # Turn Left/Right
       
       # Actions
-      stand_cmd: "triangle"        # Press to Stand
-      sit_cmd: "cross"             # Press to Sit
+      stand_cmd: "square"                # Press to Stand
+      sit_cmd: "circle"                  # Press to Sit
+      emergency_stop_cmd: "l1_trigger"   # Press to E-Stop
+      restart_cmd: "start"               # Press to Restart from E-Stop
 
     # ==========================================
     # SCALES (Max Speeds)

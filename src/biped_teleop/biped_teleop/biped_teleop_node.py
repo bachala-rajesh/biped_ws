@@ -5,6 +5,15 @@ from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 
+# Biped States struct
+class BIPEDSTATE:
+    SIT = "SIT"
+    STAND = "STAND"
+    EMERGENCY = "EMERGENCY"
+    START = "START"
+
+
+
 class BipedTeleopNode(Node):
 
     def __init__(self):
@@ -30,9 +39,12 @@ class BipedTeleopNode(Node):
         self.button_walk_x_id = None
         self.button_walk_y_id = None
         self.turn_id = None
+        self.emergency_stop_id = None
+        self.restart_id = None
         
         # default 
-        self.pose = "SIT"
+        self.pose = BIPEDSTATE.START
+        self.emergency_status = False
         
         # read parameters
         self.load_joystick_layout()
@@ -123,16 +135,41 @@ class BipedTeleopNode(Node):
         self.deadmen_id = self.cmd_map.get("deadman_switch")
         self.stand_id = self.cmd_map.get("stand_cmd")
         self.sit_id = self.cmd_map.get("sit_cmd")
+        self.emergency_stop_id = self.cmd_map.get("emergency_stop_cmd")
+        self.restart_id = self.cmd_map.get("restart_cmd")
         self.joy_walk_x_id = self.cmd_map.get("joy_walk_x")
         self.joy_walk_y_id = self.cmd_map.get("joy_walk_y")
         self.button_walk_x_id = self.cmd_map.get("button_walk_x")
         self.button_walk_y_id = self.cmd_map.get("button_walk_y")
         self.turn_id = self.cmd_map.get("turn_z")
+        
+    
 
     def joy_callback(self, msg):
         """
         Runs every time the joystick sends data.
         """
+        # check emergency status
+        if self.emergency_status:
+            # check for restart command
+            if self.restart_id is not None and msg.buttons[self.restart_id] == 1:
+                self.get_logger().info("Restarting from Emergency Stop.")
+                self.emergency_status = False
+                self.pose = BIPEDSTATE.START
+            else:
+                self.vel_publisher.publish(Twist())  # Publish zero velocities
+                self.cmd_publisher.publish(String(data=self.pose))
+                self.get_logger().warn("Emergency Stop Activated!")
+            return
+        
+        # check emergency stop
+        if self.emergency_stop_id is not None and msg.buttons[self.emergency_stop_id] == 1:
+            self.get_logger().warn("Emergency Stop Activated!")
+            self.vel_publisher.publish(Twist())  # Publish zero velocities
+            self.pose = BIPEDSTATE.EMERGENCY
+            self.cmd_publisher.publish(String(data=self.pose))
+            self.emergency_status = True
+            return
         
         #deadman switch check
         if self.deadmen_id is not None and msg.buttons[self.deadmen_id] == 0:
@@ -141,11 +178,9 @@ class BipedTeleopNode(Node):
         
         # check pose commands
         if self.stand_id is not None and msg.buttons[self.stand_id] == 1:
-            self.pose = "STAND"
-            self.cmd_publisher.publish(String(data=self.pose))
+            self.pose = BIPEDSTATE.STAND
         elif self.sit_id is not None and msg.buttons[self.sit_id] == 1:
-            self.pose = "SIT"
-            self.cmd_publisher.publish(String(data=self.pose)) 
+            self.pose = BIPEDSTATE.SIT
             
         # create velocity command
         vel_cmd = Twist()
@@ -162,9 +197,11 @@ class BipedTeleopNode(Node):
             vel_cmd.linear.x = msg.axes[self.button_walk_x_id] * self.scales.get("walk_x_scale", 1.0)
         if self.button_walk_y_id is not None and msg.axes[self.button_walk_y_id] != 0:
             vel_cmd.linear.y = msg.axes[self.button_walk_y_id] * self.scales.get("walk_y_scale", 1.0)
-       
-        # publish velocity command
+        
+        
+        # publish velocity and high level command
         self.vel_publisher.publish(vel_cmd)
+        self.cmd_publisher.publish(String(data=self.pose))
             
         
     
