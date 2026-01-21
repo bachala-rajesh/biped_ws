@@ -1,0 +1,9 @@
+<library path="biped_hardware_interface">
+  <class name="biped_hardware_interface/BipedSystemHardware"
+         type="biped_hardware_interface::BipedSystemHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ros2_control hardware interface for biped.
+    </description>
+  </class>
+</library>
