@@ -41,7 +41,7 @@ def generate_launch_description() -> LaunchDescription:
     # control node
     control_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(pkg_biped_control, "launch", "biped_control.launch.py")
+            os.path.join(pkg_biped_control, "launch", " biped_control_position.launch.py")
         ),
         launch_arguments={
             "use_sim_time": use_sim_time,
