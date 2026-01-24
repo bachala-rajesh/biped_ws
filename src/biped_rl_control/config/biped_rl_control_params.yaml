@@ -1,0 +1,11 @@
+biped_rl_control_node:
+  ros__parameters:
+    policy_model_path: "/path/to/policy/model.pt"
+    joint_pos_scale: 1.0
+    joint_vel_scale: 1.0
+    lin_vel_x_scale: 1.0
+    lin_vel_y_scale: 1.0
+    ang_vel_scale: 1.0
+    history_len: 9
+    dt: 0.02
+
