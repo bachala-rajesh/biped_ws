@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+#TODO: deadzone handling
+#TODO: implement velocity smoothing
+#TODO: button debounce handling
+#TODO: error handling in parameter loading
+#TODO: docstring in all functions
+
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Joy
