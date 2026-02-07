@@ -5,6 +5,8 @@ Simple PyQt6 GUI with sliders for a 6-DOF bipedal robot's joints.
 
 """
 
+#TODO: modify the code to work in pyqt5
+
 from __future__ import annotations
 
 from typing import Dict, List, Optional
