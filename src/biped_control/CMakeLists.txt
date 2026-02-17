@@ -23,6 +23,15 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+ament_python_install_package(${PROJECT_NAME})
+
+# Install Python executables (ROS nodes)
+install(PROGRAMS
+  biped_control/dummy_imu.py
+  biped_control/read_memory.py
+  
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 
 # Install files

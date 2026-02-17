@@ -7,6 +7,11 @@
 # - put proper scaling values. refer the author's code
 # - implement policy loading and action inference using torch
 
+######### debug to check
+# - rentrant callback group can be problematic. 
+
+
+
 
 import rclpy
 from rclpy.node import Node
@@ -171,7 +176,7 @@ class PolicyRunnerNode(Node):
         with self.imu_lock:
             # Convert quaternion to roll, pitch, yaw
             q = msg.orientation
-            # Placeholder conversion, replace with actual conversion
+            # TODO: implement proper conversion from quaternion to rpy
             self.current_rpy = np.array(
                 [0.0, 0.0, 0.0]
             )  # Replace with actual conversion
