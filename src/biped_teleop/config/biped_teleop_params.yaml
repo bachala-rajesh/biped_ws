@@ -1,4 +1,4 @@
-biped_teleop_node:
+/**:
   ros__parameters:
     # ==========================================
     # LAYER 1: HARDWARE LAYOUT (The Physical Controller)
@@ -21,36 +21,34 @@ biped_teleop_node:
         triangle: 3
         start: 7
         select: 6
-        l1_trigger: 4
+        l1_trigger: 4 
         r1_trigger: 5
 
     # ==========================================
-    # LAYER 2: CONTROL MAP (Robot Actions)
+    # LAYER 2: TELEOP CONTROL MAP 
     # ==========================================
-    control_map:
-      # Safety
-      deadman_switch: "r1_trigger"         # Must hold this to move
-      
-      # Locomotion (Refer to names in Layer 1)
-      joy_walk_x: "left_stick_y"       # Forward/Backward
-      button_walk_x: "dpad_y"        # Forward/Backward (D-Pad)
-      joy_walk_y: "left_stick_x"       # Strafe Left/Right
-      button_walk_y: "dpad_x"        # Strafe Left/Right (D-Pad)
-      turn_z: "right_stick_y"      # Turn Left/Right
-      
-      # Actions
-      stand_cmd: "square"                # Press to Stand
-      sit_cmd: "circle"                  # Press to Sit
-      emergency_stop_cmd: "l1_trigger"   # Press to E-Stop
-      restart_cmd: "start"               # Press to Restart from E-Stop
+    teleop_control_map:
 
-    # ==========================================
-    # SCALES (Max Speeds)
-    # ==========================================
-    scales:
-      walk_x_scale: 1.0
-      walk_y_scale: 1.0
-      turn_z_scale: 1.0
+      # Locomotion 
+      locomotion_control:
+        linear_x: "left_stick_y"       # Forward/Backward
+        linear_y: "left_stick_x"       # Strafe Left/Right
+        yaw: "right_stick_y"        # Strafe Left/Right (D-Pad)
+
+
+      scale_control:
+        linear_speed_scale_change: "dpad_y"
+        angular_speed_scale_change: "dpad_x"
+
+    functional_control_map:
+      state:
+        deadmen: "r1_trigger"
+        standby: "square"
+        start: "start"
+        stop: "cross"
+        emergency_stop: "l1_trigger"
+        test_check: "triangle"
+
 
 
 

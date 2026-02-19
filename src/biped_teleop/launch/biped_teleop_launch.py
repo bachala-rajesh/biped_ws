@@ -7,63 +7,65 @@ from launch.substitutions import LaunchConfiguration
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 
 
-
 def generate_launch_description():
-    
+
     #################
     # Packages
     # ###############
-    pkg_teleop = get_package_share_directory('biped_teleop')
-    
-    
+    pkg_teleop = get_package_share_directory("biped_teleop")
+
     # ###############
-    # Configurations 
+    # Configurations
     # ###############
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    
+    use_sim_time = LaunchConfiguration("use_sim_time", default="true")
 
     #################
     # Nodes
     # ###############
     # joystick node
     joy_node = Node(
-        package='joy',
-        executable='joy_node',
-        name='joy_node',
-        output='screen',
+        package="joy",
+        executable="joy_node",
+        name="joy_node",
+        output="screen",
         parameters=[{"use_sim_time": use_sim_time}],
         emulate_tty=True,
     )
-    
-    
-    
+
     # teleop_node
     teleop_config = os.path.join(
         pkg_teleop,
-        'config',
-        'biped_teleop_params.yaml',
+        "config",
+        "biped_teleop_params.yaml",
     )
-    teleop_node = Node(
-        package='biped_teleop',
-        executable='biped_teleop_node',
-        name='biped_teleop_node',
-        output='screen',
-        parameters=[teleop_config,
-                    {"use_sim_time": use_sim_time}
-                    ],
+    joy_teleop_node = Node(
+        package="biped_teleop",
+        executable="joy_teleop_node",
+        name="joy_teleop_node",
+        output="screen",
+        parameters=[teleop_config, {"use_sim_time": use_sim_time}],
         emulate_tty=True,
     )
-    
-    
 
-    return LaunchDescription([
-        DeclareLaunchArgument(
-            'use_sim_time',
-            default_value='true',
-            description='Use simulation (Gazebo) clock if true'
-        ),
-        
-        joy_node,
-        teleop_node,
-    ])
-        
+    # joy_state_node
+    joy_state_node = Node(
+        package="biped_teleop",
+        executable="joy_state_node",
+        name="joy_state_node",
+        output="screen",
+        parameters=[teleop_config, {"use_sim_time": use_sim_time}],
+        emulate_tty=True,
+    )
+
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                "use_sim_time",
+                default_value="true",
+                description="Use simulation (Gazebo) clock if true",
+            ),
+            joy_node,
+            joy_teleop_node,
+            joy_state_node,
+        ]
+    )
