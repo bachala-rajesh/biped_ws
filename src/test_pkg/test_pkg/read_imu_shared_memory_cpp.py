@@ -1,5 +1,9 @@
 #! /usr/bin/env python3
 
+"""
+Read IMU data from shared memory. th shared mory data is implemented in dummy_imu_shared_memory.cpp
+"""
+
 import mmap
 import struct
 import time

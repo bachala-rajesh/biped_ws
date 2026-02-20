@@ -1,0 +1,19 @@
+dm_imu:
+  ros__parameters:
+    port: /dev/dm_imu
+    baudrate: 921600
+    frame_id: imu_link
+
+    # Topic publish switches
+    publish_imu_data: true   # Set to false to disable
+    publish_rpy: true
+    publish_pose: true
+
+    # RPY units (true=degrees, false=radians)
+    publish_rpy_in_degree: true
+
+    # Other
+    qos_reliable: true      # or true, as needed
+    verbose: false
+
+    reconnect_interval_sec: 1.0

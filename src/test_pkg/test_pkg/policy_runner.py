@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
+"""
+Policy runner node that runs the policy and publishes the joint commands...  not yet completed
 
-######### ToDo
-# - fix convert quaternion to rpy
-# - fix zero default joint positions- think of alternative rather than hardcoding
-# - put proper scaling values. refer the author's code
-# - implement policy loading and action inference using torch
+ToDo:
+- fix convert quaternion to rpy
+- fix zero default joint positions- think of alternative rather than hardcoding
+- put proper scaling values. refer the author's code
+- implement policy loading and action inference using torch
 
-######### debug to check
-# - rentrant callback group can be problematic. 
+Debug to check:
+- rentrant callback group can be problematic. 
+"""
 
 
 

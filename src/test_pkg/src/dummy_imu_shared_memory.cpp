@@ -1,7 +1,16 @@
+// -----------------------------
+// generates dummy IMU data and writes to shared memory
+// -----------------------------
+
+
+
+
+
+
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 
-#include "biped_control/robot_shared_memory.hpp"
+#include "test_pkg/robot_shared_memory.hpp"
 
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>

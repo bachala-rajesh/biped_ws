@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Dummy IMU node that generates dummy IMU data and writes to shared memory
+"""
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Imu
