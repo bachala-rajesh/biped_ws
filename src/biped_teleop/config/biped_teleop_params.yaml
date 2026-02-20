@@ -43,11 +43,13 @@
     functional_control_map:
       state:
         deadmen: "r1_trigger"
-        standby: "square"
         start: "start"
         stop: "cross"
+        standby: "square"
+        active: "circle"
         emergency_stop: "l1_trigger"
         test_check: "triangle"
+
 
 
 

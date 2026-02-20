@@ -11,10 +11,11 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 
 class JOYSTATE:
-    START = "start"
     DEADMEN = "deadmen"
-    STANDBY = "standby"
+    START = "start"
     STOP = "stop"
+    STANDBY = "standby"
+    ACTIVE = "active"
     EMERGENCY_STOP = "emergency_stop"
     TEST_CHECK = "test_check"
     NONE = "none"  # no button pressed
@@ -196,6 +197,8 @@ class TeleopNode(Node):
             self.state_msg.data = JOYSTATE.EMERGENCY_STOP
         elif self.cmd_map[JOYSTATE.TEST_CHECK]["value"] == 1:
             self.state_msg.data = JOYSTATE.TEST_CHECK
+        elif self.cmd_map[JOYSTATE.ACTIVE]["value"] == 1:
+            self.state_msg.data = JOYSTATE.ACTIVE
         else:
             self.state_msg.data = JOYSTATE.NONE
 

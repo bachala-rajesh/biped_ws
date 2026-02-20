@@ -1,0 +1,46 @@
+<StateMachine name="RobotStates"  start_state="INIT">
+
+    <State name="INIT" type="py" module="biped_control.robot_states" class="InitState">
+        <Transition from="ready" to="PASSIVE"/>
+        <Transition from="imu_failure" to="ERROR"/>
+        <Transition from="joy_failure" to="ERROR"/>
+    </State>
+
+    <State name="PASSIVE" type="py" module="biped_control.robot_states" class="PassiveState">
+        <Transition from="user_start" to="STANDBY"/>
+        <Transition from="imu_failure" to="ERROR"/>
+        <Transition from="fall_detected" to="FALLEN"/>
+    </State>
+
+    <State name="STANDBY" type="py" module="biped_control.robot_states" class="StandbyState">
+        <Transition from="user_active" to="ACTIVE"/>
+        <Transition from="user_stop" to="PASSIVE"/>
+        <Transition from="imu_failure" to="ERROR"/>
+        <Transition from="fall_detected" to="FALLEN"/>
+        <Transition from="emergency_stop" to="STOP"/>
+    </State>
+
+    <State name="ACTIVE" type="py" module="biped_control.robot_states" class="ActiveState">
+        <Transition from="fall_detected" to="FALLEN"/>
+        <Transition from="imu_failure" to="ERROR"/>
+        <Transition from="user_standby" to="STANDBY" />
+        <Transition from="emergency_stop" to="STOP"/>
+    </State>
+
+    <State name="FALLEN" type="py" module="biped_control.robot_states" class="FallenState">
+        <Transition from="reset" to="INIT"/>
+        <Transition from="emergency_stop" to="STOP"/>
+        <Transition from="stop" to="STOP"/>
+    </State>
+
+    <State name="ERROR" type="py" module="biped_control.robot_states" class="ErrorState">
+        <Transition from="recovered" to="INIT"/>
+        <Transition from="emergency_stop" to="STOP"/>
+        <Transition from="stop" to="STOP"/>
+    </State>
+
+    <State name="STOP" type="py" module="biped_control.robot_states" class="StopState">
+        <Transition from="reset" to="INIT"/>
+    </State>
+
+</StateMachine>
