@@ -1,5 +1,12 @@
+// -----------------------------
+// Read IMU data from shared memory
+// -----------------------------
+
+
+
+
 #include "rclcpp/rclcpp.hpp"
-#include "biped_control/robot_shared_memory.hpp"
+#include "test_pkg/robot_shared_memory.hpp"
 
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
@@ -115,10 +122,11 @@ private:
         // --- SUCCESS ---
         // Only print every 50th message (approx 1 per second) to keep logs clean
         // or print every time if you debugging
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
-            "Safe Read | IMU: x=%.3f, y=%.3f, z=%.3f, w=%.3f", 
-            local_imu[0], local_imu[1], local_imu[2], local_imu[3]
-        );
+        RCLCPP_INFO(this->get_logger(), "Safe Read | IMU: x=%.3f, y=%.3f, z=%.3f, w=%.3f", local_imu[0], local_imu[1], local_imu[2], local_imu[3]);
+        // RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+        //     "Safe Read | IMU: x=%.3f, y=%.3f, z=%.3f, w=%.3f", 
+        //     local_imu[0], local_imu[1], local_imu[2], local_imu[3]
+        // );
     }
 
     // Boost Objects

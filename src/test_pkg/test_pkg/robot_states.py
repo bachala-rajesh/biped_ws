@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Biped Control State Machine
+Finite State Machine for the robot states implemented for Biped robot. 
+Common blackboard is shared with the ros2 node implemented in robot_states_fsm_python.py
 """
 
 import time

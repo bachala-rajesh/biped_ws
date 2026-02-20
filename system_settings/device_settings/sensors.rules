@@ -1,0 +1,3 @@
+# Right Leg - Plug into specific port right side of the pc 
+SUBSYSTEM=="tty", ATTRS{idVendor}=="6877", ATTRS{idProduct}=="4d55", SYMLINK+="dm_imu", MODE="0660", GROUP="dialout", TAG+="uaccess"
+

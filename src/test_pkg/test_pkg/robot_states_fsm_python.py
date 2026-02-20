@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+ROS2 node that subscribes topics and timer.
+It is attached to the robot states.
+It shares the common blackboard with the robot states and is used to update the state of the robot.
+"""
+
 from geometry_msgs.msg import TwistStamped
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
@@ -22,10 +28,10 @@ from yasmin_ros import set_ros_loggers
 
 
 # get path to robot_states.xml
-import biped_control
+import test_pkg
 
 robot_states_xml_path = os.path.join(
-    os.path.dirname(biped_control.__file__), "robot_states.xml"
+    os.path.dirname(test_pkg.__file__), "robot_states.xml"
 )
 
 
@@ -170,6 +176,13 @@ def main(args=None):
         outcome = state_machine(blackboard)
     except KeyboardInterrupt:
         pass
+    except RuntimeError as e:
+        # Catches the YASMIN C++ panic message and silences it
+        if "canceled state machine" in str(e):
+            print("\n[INFO] FSM interrupted and closed safely.")
+        else:
+            # If it's a real error, print it!
+            print(f"FSM CRASHED: {e}")
     finally:
         executor.shutdown()
         node.destroy_node()

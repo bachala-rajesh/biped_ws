@@ -28,41 +28,6 @@ endif()
 
 ament_python_install_package(${PROJECT_NAME})
 
-# Install Python executables (ROS nodes)
-install(PROGRAMS
-  biped_control/dummy_imu.py
-  biped_control/read_memory.py
-  biped_control/read_imu_memory_python.py
-  biped_control/robot_states_fsm_python.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-# add c++ executables
-add_executable(dummy_imu_node src/dummy_imu.cpp)
-ament_target_dependencies(dummy_imu_node rclcpp sensor_msgs)
-target_link_libraries(dummy_imu_node 
-  ${Boost_LIBRARIES}
-  rt
-  pthread
-)
-
-add_executable(read_imu_memory_cpp src/read_imu_memory.cpp)
-ament_target_dependencies(read_imu_memory_cpp rclcpp sensor_msgs)
-target_link_libraries(read_imu_memory_cpp 
-  ${Boost_LIBRARIES}
-  rt
-  pthread
-)
-
-
-add_executable(robot_states_fsm src/robot_states_FSM.cpp)
-ament_target_dependencies(robot_states_fsm rclcpp sensor_msgs tf2)
-
-install(TARGETS dummy_imu_node DESTINATION lib/${PROJECT_NAME})
-install(TARGETS read_imu_memory_cpp DESTINATION lib/${PROJECT_NAME})
-install(TARGETS robot_states_fsm DESTINATION lib/${PROJECT_NAME})
-
-
 # Install files
 install(DIRECTORY
   config

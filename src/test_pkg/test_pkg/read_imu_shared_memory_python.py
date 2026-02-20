@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+
+"""
+Read IMU data from shared memory. the shared memory data is implemented in dummy_imu.py
+"""
+
 import time
 import struct
 from multiprocessing import shared_memory

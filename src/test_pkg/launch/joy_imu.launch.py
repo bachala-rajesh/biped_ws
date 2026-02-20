@@ -21,7 +21,6 @@ def generate_launch_description():
     # ###############
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
-    pkg_biped_control = get_package_share_directory("biped_control")
     pkg_biped_teleop = get_package_share_directory("biped_teleop")
     pkg_dm_imu = get_package_share_directory("dm_imu")
 
