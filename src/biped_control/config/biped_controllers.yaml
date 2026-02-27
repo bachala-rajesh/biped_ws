@@ -44,5 +44,11 @@ joints_position_controller:
       - right_hip_roll_joint
       - right_knee_joint
 
+    command_interfaces:
+      - position
+
+    state_interfaces:
+      - position
+
 
 

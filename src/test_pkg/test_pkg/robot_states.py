@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# TODO: check the switch_controllers function is working correctly...
+# TODO: Add the action client in the passive state to move the robot to the standby position.
+# TODO: add the action client in the stop state to move the robot to the zero position.
 """
 Finite State Machine for the robot states implemented for Biped robot. 
 Common blackboard is shared with the ros2 node implemented in robot_states_fsm_python.py
@@ -7,6 +11,8 @@ Common blackboard is shared with the ros2 node implemented in robot_states_fsm_p
 import time
 import yasmin
 from yasmin import State, Blackboard
+import rclpy
+from controller_manager_msgs.srv import SwitchController
 
 
 ROLL_FALL_DETECTION_THRESHOLD = 15.0  # degrees
@@ -15,6 +21,56 @@ IMU_FAILURE_TIMEOUT = 1.0  # seconds
 INIT_DELAY = 1.0  # seconds
 JOY_START_BUTTON_HOLD = 2.0  # seconds
 WAIT_TIME_INTERVAL = 3.0  # seconds
+
+
+# controller names
+TRAJECTORY_CONTROLLER = "trajectory_controller"
+POLICY_CONTROLLER = "joints_position_controller"
+
+
+def switch_controllers(blackboard, activate_list, deactivate_list):
+    """
+    Switches ROS 2 controllers safely.
+    """
+    blackboard["controllers_switched"] = False
+
+    client = blackboard.get("switch_client")
+    fsm_node = blackboard.get("fsm_node")
+
+    # Safety check: ensure client exists
+    if not client or not fsm_node:
+        yasmin.YASMIN_LOG_ERROR("Switch client missing from blackboard!")
+        return False
+
+    if not client.wait_for_service(timeout_sec=2.0):
+        yasmin.YASMIN_LOG_ERROR("Controller Manager service is dead!")
+        return False
+
+    # Create the request
+    req = SwitchController.Request()
+    req.activate_controllers = activate_list
+    req.deactivate_controllers = deactivate_list
+    req.strictness = SwitchController.Request.STRICT
+    
+    # logging the controllers to be switched
+    yasmin.YASMIN_LOG_INFO(f"Switching controllers: ON: {activate_list}, OFF: {deactivate_list}")
+
+    # Call the service and wait for it to finish
+    future = client.call_async(req)
+    rclpy.spin_until_future_complete(fsm_node, future)
+
+    # Return True if successful
+    if future.result() is not None and future.result().ok:
+        yasmin.YASMIN_LOG_INFO(
+            f"Controllers Switched! ON: {activate_list}, OFF: {deactivate_list}"
+        )
+        blackboard["controllers_switched"] = True
+        return True
+
+    yasmin.YASMIN_LOG_ERROR("Failed to switch controllers.")
+    return False
+
+
 
 
 # --- HELPER: SENSOR WATCHDOG ---
@@ -68,7 +124,7 @@ def fall_detection(blackboard):
 
 class InitState(State):
     def __init__(self):
-        super().__init__(outcomes=["ready", "imu_failure", "joy_failure"])
+        super().__init__(outcomes=["ready", "imu_failure", "joy_failure", "switch_controller_failure"])
 
     def execute(self, blackboard: Blackboard):
 
@@ -89,6 +145,7 @@ class InitState(State):
             if imu_health != "imu_failure" and joy_health != "joy_failure":
                 break
 
+            # wait for timeout
             if time.time() - last_time > WAIT_TIME_INTERVAL:
                 break
 
@@ -99,23 +156,32 @@ class InitState(State):
         if joy_health == "joy_failure":
             return "joy_failure"
 
-        yasmin.YASMIN_LOG_INFO("sensors are healthy, initializing robot...")
-        time.sleep(INIT_DELAY)
+        yasmin.YASMIN_LOG_INFO("sensors are healthy, switching controllers...")
+        # switch to trajectory controller
+        switch_controller_status = switch_controllers(blackboard, [TRAJECTORY_CONTROLLER], [POLICY_CONTROLLER])
+        
+        if not switch_controller_status:
+            return "switch_controller_failure"
+        else:
+            yasmin.YASMIN_LOG_INFO("controllers switched successfully")
+            return "ready"
+        
 
-        return "ready"
-
+    
 
 class PassiveState(State):
     def __init__(self):
-        super().__init__(outcomes=["user_start", "imu_failure", "fall_detected"])
+        super().__init__(outcomes=["user_start", "imu_failure", "fall_detected", "start_position_failure", "switch_controller_failure"])
 
     def execute(self, blackboard: Blackboard):
         blackboard["robot_state"] = "passive"
 
         yasmin.YASMIN_LOG_INFO("Robot is in passive state")
+        
         time.sleep(1)
 
         start_button_hold = False
+        start_button_status = False
 
         while True:
             # check for imu failure
@@ -136,9 +202,21 @@ class PassiveState(State):
                 else:
                     if time.time() - last_joy_start_time > JOY_START_BUTTON_HOLD:
                         yasmin.YASMIN_LOG_INFO("User started the robot")
-                        return "user_start"
+                        start_button_status = True
+                        break
+            else:
+                start_button_hold = False
 
             time.sleep(0.1)
+        
+        if start_button_status:
+            # TODO: add feature to move the robot to the start position
+            # switch to policy controller
+            switch_controller_status = switch_controllers(blackboard, [POLICY_CONTROLLER], [TRAJECTORY_CONTROLLER])
+            if not switch_controller_status:
+                return "switch_controller_failure"
+            else:
+                return "user_start"
 
 
 class StandbyState(State):
@@ -223,12 +301,17 @@ class ActiveState(State):
 
 class FallenState(State):
     def __init__(self):
-        super().__init__(outcomes=["reset", "emergency_stop", "stop"])
+        super().__init__(outcomes=["reset", "emergency_stop", "stop", "switch_controller_failure"])
 
     def execute(self, blackboard: Blackboard):
         blackboard["robot_state"] = "fallen"
         yasmin.YASMIN_LOG_INFO("Robot is in fallen state")
         time.sleep(1)
+        
+        # deactivate all the controllers
+        switch_controller_status = switch_controllers(blackboard, [], [TRAJECTORY_CONTROLLER, POLICY_CONTROLLER])
+        if not switch_controller_status:
+            return "switch_controller_failure"
 
         while True:
             # check for reset
@@ -248,12 +331,17 @@ class FallenState(State):
 
 class ErrorState(State):
     def __init__(self):
-        super().__init__(outcomes=["recovered", "stop", "emergency_stop"])
+        super().__init__(outcomes=["recovered", "stop", "emergency_stop", "switch_controller_failure"])
 
     def execute(self, blackboard: Blackboard):
         blackboard["robot_state"] = "error"
         yasmin.YASMIN_LOG_INFO("Robot is in error state")
         time.sleep(1)
+        
+        # deactivate all the controllers
+        switch_controller_status = switch_controllers(blackboard, [], [TRAJECTORY_CONTROLLER, POLICY_CONTROLLER])
+        if not switch_controller_status:
+            return "switch_controller_failure"
 
         while True:
             if blackboard.get("joy_state") == "start":
@@ -272,12 +360,17 @@ class ErrorState(State):
 
 class StopState(State):
     def __init__(self):
-        super().__init__(outcomes=["reset"])
+        super().__init__(outcomes=["reset", "switch_controller_failure"])
 
     def execute(self, blackboard: Blackboard):
         blackboard["robot_state"] = "emergency"
         yasmin.YASMIN_LOG_INFO("Robot is in emergency state")
         time.sleep(1)
+        
+        # deactivate all the controllers
+        switch_controller_status = switch_controllers(blackboard, [], [TRAJECTORY_CONTROLLER, POLICY_CONTROLLER])
+        if not switch_controller_status:
+            return "switch_controller_failure"
 
         while True:
             if blackboard.get("joy_state") == "start":

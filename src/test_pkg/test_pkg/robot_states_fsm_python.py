@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+TODO: check the fsm_client_node and switch_client are working correctly...
+
 """
 ROS2 node that subscribes topics and timer.
 It is attached to the robot states.
@@ -19,6 +21,7 @@ import math
 import os
 from geometry_msgs.msg import TwistStamped
 from std_msgs.msg import String
+from controller_manager_msgs.srv import SwitchController
 
 # yasmin imports
 from yasmin import Blackboard
@@ -119,6 +122,8 @@ class StateBridgeNode(Node):
             self.imu_data = [roll_deg, pitch_deg, yaw_deg]
 
             self.blackboard["imu_status"] = True
+            
+            # TODO: write the imu data to the shared memory
 
         except Exception as e:
             self.get_logger().error(f"Error converting quaternion to RPY: {e}")
@@ -130,18 +135,27 @@ class StateBridgeNode(Node):
             msg.twist.linear.y,
             msg.twist.angular.z,
         ]
+        
+        # TODO: write the joy cmd data to the shared memory
+        # the cmd data is depend upon the robot state. 
 
     def joy_state_callback(self, msg: String) -> None:
         self.joy_state_data = msg.data
 
         self.blackboard["joy_state"] = self.joy_state_data
         self.blackboard["joy_status"] = True
+        
+        # TODO: write the joy state data to the shared memory
+
 
     def timer_callback(self) -> None:
         # rclpy.get_logger().info(f"robot state: {self.blackboard['state']}")
         state = self.blackboard["robot_state"]
 
         # self.get_logger().info(f"robot state: {state}")
+        
+        # TODO: write the robot state data to the shared memory. 
+        
         return
 
 
@@ -156,6 +170,13 @@ def main(args=None):
     blackboard.set("imu_pitch", 0.0)
     blackboard.set("imu_yaw", 0.0)
     blackboard.set("robot_state", "none")
+    
+    fsm_client_node = rclpy.create_node("fsm_service_client")
+    switch_client = fsm_client_node.create_client(SwitchController, "/controller_manager/switch_controller")
+    
+    # Add them to the blackboard so your Python states can use them
+    blackboard.set("fsm_node", fsm_client_node)
+    blackboard.set("switch_client", switch_client)
 
     node = StateBridgeNode(blackboard)
     executor = MultiThreadedExecutor()
@@ -186,6 +207,7 @@ def main(args=None):
     finally:
         executor.shutdown()
         node.destroy_node()
+        fsm_client_node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
 

@@ -4,17 +4,20 @@
         <Transition from="ready" to="PASSIVE"/>
         <Transition from="imu_failure" to="ERROR"/>
         <Transition from="joy_failure" to="ERROR"/>
+        <Transition from="switch_controller_failure" to="ERROR"/>
     </State>
 
     <State name="PASSIVE" type="py" module="test_pkg.robot_states" class="PassiveState">
         <Transition from="user_start" to="STANDBY"/>
         <Transition from="imu_failure" to="ERROR"/>
         <Transition from="fall_detected" to="FALLEN"/>
+        <Transition from="switch_controller_failure" to="ERROR"/>
+        <Transition from="start_position_failure" to="ERROR"/>
     </State>
 
     <State name="STANDBY" type="py" module="test_pkg.robot_states" class="StandbyState">
         <Transition from="user_active" to="ACTIVE"/>
-        <Transition from="user_stop" to="PASSIVE"/>
+        <Transition from="user_stop" to="INIT"/>
         <Transition from="imu_failure" to="ERROR"/>
         <Transition from="fall_detected" to="FALLEN"/>
         <Transition from="emergency_stop" to="STOP"/>
@@ -31,16 +34,19 @@
         <Transition from="reset" to="INIT"/>
         <Transition from="emergency_stop" to="STOP"/>
         <Transition from="stop" to="STOP"/>
+        <Transition from="switch_controller_failure" to="STOP"/>
     </State>
 
     <State name="ERROR" type="py" module="test_pkg.robot_states" class="ErrorState">
         <Transition from="recovered" to="INIT"/>
         <Transition from="emergency_stop" to="STOP"/>
         <Transition from="stop" to="STOP"/>
+        <Transition from="switch_controller_failure" to="STOP"/>
     </State>
 
     <State name="STOP" type="py" module="test_pkg.robot_states" class="StopState">
         <Transition from="reset" to="INIT"/>
+        <Transition from="switch_controller_failure" to="STOP"/>
     </State>
 
 </StateMachine>
