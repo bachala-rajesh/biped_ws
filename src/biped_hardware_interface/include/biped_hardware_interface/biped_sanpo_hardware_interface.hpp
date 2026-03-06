@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BIPED_HARDWARE_INTERFACE__BIPED_SYSTEM_HPP_
-#define BIPED_HARDWARE_INTERFACE__BIPED_SYSTEM_HPP_
+#ifndef BIPED_HARDWARE_INTERFACE__BIPED_SANPO_HARDWARE_INTERFACE_HPP_
+#define BIPED_HARDWARE_INTERFACE__BIPED_SANPO_HARDWARE_INTERFACE_HPP_
 
 #include <string>
 #include <vector>
@@ -25,13 +25,10 @@
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "rclcpp/macros.hpp"
 #include "rclcpp_lifecycle/state.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "biped_hardware_interface/microcontroller_comms.hpp"
 
 namespace biped_hardware_interface
 {
-class BipedSystemHardware : public hardware_interface::SystemInterface
+class BipedSanpoHardwareInterface : public hardware_interface::SystemInterface
 {
 public:
   hardware_interface::CallbackReturn on_init(
@@ -57,20 +54,10 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  // state and command variables
   std::vector<double> hw_commands_;
-  std::vector<double> hw_states_position_;
-  std::vector<double> hw_states_velocity_;
-
-  // microcontroller communication variables
-  std::string left_leg_port_name_;
-  std::string right_leg_port_name_;
-  unsigned long baud_rate_ = 115200;
-  biped_hardware_interface::MicrocontrollerComms left_leg_comms_;
-  biped_hardware_interface::MicrocontrollerComms right_leg_comms_;
-
+  std::vector<double> hw_states_;
 };
 
 }  // namespace biped_hardware_interface
 
-#endif  // BIPED_HARDWARE_INTERFACE__BIPED_SYSTEM_HPP_
+#endif  // BIPED_HARDWARE_INTERFACE__BIPED_SANPO_HARDWARE_INTERFACE_HPP_

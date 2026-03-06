@@ -12,11 +12,14 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(serial REQUIRED)
+find_package(fmt REQUIRED)
+find_package(ros2_fmt_logger REQUIRED)
+find_package(spdlog REQUIRED)
 
 add_library(
   biped_hardware_interface
   SHARED
-  src/biped_system.cpp
+  src/biped_sanpo_hardware_interface.cpp
 )
 target_include_directories(
   biped_hardware_interface
@@ -29,7 +32,11 @@ ament_target_dependencies(
   rclcpp
   rclcpp_lifecycle
   serial
+  fmt
+  ros2_fmt_logger
+  spdlog
 )
+
 # prevent pluginlib from using boost
 target_compile_definitions(biped_hardware_interface PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 
@@ -49,9 +56,6 @@ install(
   DESTINATION include
 )
 
-# option(BUILD_TESTING "Build the testing tree." OFF)
-
-
 
 ament_export_include_directories(
   include
@@ -65,29 +69,33 @@ ament_export_dependencies(
   rclcpp
   rclcpp_lifecycle
   serial
+  fmt
+  ros2_fmt_logger
+  spdlog
 )
 
-add_executable(serial_example src/serial_example.cpp)
-ament_target_dependencies(serial_example 
+# Install Python modules
+ament_python_install_package(${PROJECT_NAME})
+
+add_executable(test_sanpo_hardware_interface src/test_sanpo_hardware_interface.cpp)
+ament_target_dependencies(test_sanpo_hardware_interface 
   serial 
 )
+target_link_libraries(test_sanpo_hardware_interface
+  fmt::fmt
+  spdlog::spdlog
 
-add_executable(serial_debug src/serial_debug.cpp)
-ament_target_dependencies(serial_debug 
-  serial 
 )
-
 # Install the executable so you can run it
 install(TARGETS 
-          serial_example
-          serial_debug
+          test_sanpo_hardware_interface
   DESTINATION lib/${PROJECT_NAME}
 )
 
 # Install launch files
 install(DIRECTORY
-  launch
   DESTINATION share/${PROJECT_NAME}/
 )
+
 
 ament_package()
