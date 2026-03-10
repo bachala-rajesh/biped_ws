@@ -1,0 +1,8 @@
+
+
+############ sanpo board port rules
+# Left Leg 
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", ATTRS{serial}=="366238803138", SYMLINK+="biped_sanpo_left_port", MODE="0660", GROUP="dialout", TAG+="uaccess"
+
+# Right Leg 
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", ATTRS{serial}=="337A356A3138", SYMLINK+="biped_sanpo_right_port", MODE="0660", GROUP="dialout", TAG+="uaccess"

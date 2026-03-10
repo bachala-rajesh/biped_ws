@@ -76,24 +76,33 @@ ament_export_dependencies(
 
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
-
-add_executable(test_sanpo_hardware_interface src/test_sanpo_hardware_interface.cpp)
-ament_target_dependencies(test_sanpo_hardware_interface 
-  serial 
+# Install Python executables (ROS nodes)
+install(PROGRAMS
+  biped_hardware_interface/test_hardware_interface_position_controller_sine_test.py
+  
+  DESTINATION lib/${PROJECT_NAME}
 )
-target_link_libraries(test_sanpo_hardware_interface
-  fmt::fmt
-  spdlog::spdlog
 
-)
+# add_executable(test_sanpo_hardware_interface src/test_sanpo_hardware_interface.cpp)
+# ament_target_dependencies(test_sanpo_hardware_interface 
+#   serial 
+# )
+# target_link_libraries(test_sanpo_hardware_interface
+#   fmt::fmt
+#   spdlog::spdlog
+# )
+
+
 # Install the executable so you can run it
 install(TARGETS 
-          test_sanpo_hardware_interface
+          # test_sanpo_hardware_interface
   DESTINATION lib/${PROJECT_NAME}
 )
 
 # Install launch files
 install(DIRECTORY
+  launch
+  config
   DESTINATION share/${PROJECT_NAME}/
 )
 

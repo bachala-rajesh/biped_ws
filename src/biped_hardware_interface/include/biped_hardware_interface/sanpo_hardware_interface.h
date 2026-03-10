@@ -1,5 +1,8 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_WARN
-// 1. You MUST define this before including spdlog to enable SPDLOG_DEBUG
+// for debugging change the above to SPDLOG_DEBUG
+
+// TODO: improve the unpack_response_and_get_motor_states
+//      - use the iterators
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -204,7 +207,7 @@ public:
         SPDLOG_DEBUG("received buffer response size: {} bytes: ", response.size());
         
             if (response.size() < SANPO_FRAME_SIZE) {
-            SPDLOG_WARN("Response size {} bytes is smaller than SANPO frame size, cannot extract motor states.", response.size());
+            // SPDLOG_WARN("Response size {} bytes is smaller than SANPO frame size, cannot extract motor states.", response.size());
             return;
         }
 
@@ -225,7 +228,6 @@ public:
 
             // break the loop if there is not enough data left in the buffer for a full frame
             if (response.size() < SANPO_FRAME_SIZE) {
-                SPDLOG_WARN("invalid response length");
                 break;
             }
 
@@ -503,7 +505,7 @@ public:
         get_motor_states_from_rx_response(received_motor_states);
 
         if (received_motor_states.empty()) {
-            SPDLOG_WARN("No valid SANPO response frame found in the response when trying to update motor states.");
+            // SPDLOG_WARN("No valid SANPO response frame found in the response when trying to update motor states.");
             return;
         }
 

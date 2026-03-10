@@ -2,9 +2,9 @@
   <robot name="bipedal_robot">
     <ros2_control name="real_biped_ros2_control" type="system">
       <hardware>
-        <plugin>biped_hardware_interface/BipedSystemHardware</plugin>
-        <param name="left_leg_port">/dev/biped_esp32_left</param>
-        <param name="right_leg_port">/dev/biped_esp32_right</param>
+        <plugin>biped_hardware_interface/BipedSanpoHardwareInterface</plugin>
+        <param name="left_leg_port">/dev/biped_sanpo_left_port</param>
+        <param name="right_leg_port">/dev/biped_sanpo_right_port</param>
         <param name="baud_rate">1000000</param>
       </hardware>
 
