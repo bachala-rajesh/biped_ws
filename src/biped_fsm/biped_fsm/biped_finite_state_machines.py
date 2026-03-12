@@ -4,6 +4,10 @@ Finite State Machine for the robot states implemented for Biped robot.
 Common blackboard is shared with the ros2 node implemented in robot_states_fsm_python.py
 """
 
+#TODO:
+# - add joint states timer check
+
+
 import time
 import yasmin
 from yasmin import State, Blackboard
@@ -11,7 +15,8 @@ from yasmin import State, Blackboard
 
 ROLL_FALL_DETECTION_THRESHOLD = 15.0  # degrees
 PITCH_FALL_DETECTION_THRESHOLD = 15.0  # degrees
-IMU_FAILURE_TIMEOUT = 1.0  # seconds
+IMU_FAILURE_TIMEOUT = 0.5  # seconds
+JOINT_STATES_FAILURE_TIMEOUT = 0.5  # seconds
 INIT_DELAY = 1.0  # seconds
 JOY_START_BUTTON_HOLD = 2.0  # seconds
 WAIT_TIME_INTERVAL = 3.0  # seconds
@@ -39,13 +44,33 @@ def check_imu_health(blackboard):
         return "imu_failure"
     return None
 
+def check_joint_states_health(blackboard):
+    """
+    Checks if the joint states are recent
+    Returns: 'joint_states_failure' if not recent, None if recent.
+    """
+    if not blackboard["joint_states_status"]:
+        yasmin.YASMIN_LOG_ERROR("Joint states are not being received")
+        return "joint_states_failure"
+
+    last_time = blackboard["last_joint_states_time"]
+    current_time = time.time()
+
+    # If no data for more than timeout -> FAILURE
+    if (current_time - last_time) > JOINT_STATES_FAILURE_TIMEOUT:
+        yasmin.YASMIN_LOG_ERROR(
+            f"Joint states TIMEOUT! Last seen {current_time - last_time:.2f}s ago"
+        )
+        return "joint_states_failure"
+    return None
+
 
 def check_joy_health(blackboard):
     """
     Checks if the joystick is connected.
     Returns: 'joy_failure' if not connected, None if connected.
     """
-    if not blackboard.get("joy_status"):
+    if not blackboard.get("joy_state_status"):
         yasmin.YASMIN_LOG_ERROR("Joystick is not connected")
         return "joy_failure"
     return None
@@ -68,11 +93,11 @@ def fall_detection(blackboard):
 
 class InitState(State):
     def __init__(self):
-        super().__init__(outcomes=["ready", "imu_failure", "joy_failure"])
+        super().__init__(outcomes=["ready", "imu_failure", "joy_failure", "joint_states_failure"])
 
     def execute(self, blackboard: Blackboard):
 
-        blackboard["robot_state"] = "init"
+        blackboard["robot_state"] = "INIT"
 
         time.sleep(INIT_DELAY)
 
@@ -85,8 +110,9 @@ class InitState(State):
             # check health of IMU and joystick
             imu_health = check_imu_health(blackboard)
             joy_health = check_joy_health(blackboard)
+            joint_states_health = check_joint_states_health(blackboard)
 
-            if imu_health != "imu_failure" and joy_health != "joy_failure":
+            if imu_health != "imu_failure" and joy_health != "joy_failure" and joint_states_health != "joint_states_failure":
                 break
 
             if time.time() - last_time > WAIT_TIME_INTERVAL:
@@ -98,6 +124,8 @@ class InitState(State):
             return "imu_failure"
         if joy_health == "joy_failure":
             return "joy_failure"
+        if joint_states_health == "joint_states_failure":
+            return "joint_states_failure"
 
         yasmin.YASMIN_LOG_INFO("sensors are healthy, initializing robot...")
         time.sleep(INIT_DELAY)
@@ -107,10 +135,10 @@ class InitState(State):
 
 class PassiveState(State):
     def __init__(self):
-        super().__init__(outcomes=["user_start", "imu_failure", "fall_detected"])
+        super().__init__(outcomes=["user_start", "imu_failure", "fall_detected", "joint_states_failure", "stop"])
 
     def execute(self, blackboard: Blackboard):
-        blackboard["robot_state"] = "passive"
+        blackboard["robot_state"] = "PASSIVE"
 
         yasmin.YASMIN_LOG_INFO("Robot is in passive state")
         time.sleep(1)
@@ -122,11 +150,20 @@ class PassiveState(State):
             imu_health = check_imu_health(blackboard)
             if imu_health == "imu_failure":
                 return "imu_failure"
+            
+            # check for joint states failure
+            joint_states_health = check_joint_states_health(blackboard)
+            if joint_states_health == "joint_states_failure":
+                return "joint_states_failure"
 
             # check for fall detection
             fall_detection_state = fall_detection(blackboard)
             if fall_detection_state == "fall_detected":
                 return "fall_detected"
+            
+            # check for user stop
+            if blackboard.get("joy_state") == "stop":
+                return "stop"
 
             # check for user start
             if blackboard.get("joy_state") == "start":
@@ -137,8 +174,10 @@ class PassiveState(State):
                     if time.time() - last_joy_start_time > JOY_START_BUTTON_HOLD:
                         yasmin.YASMIN_LOG_INFO("User started the robot")
                         return "user_start"
-
-            time.sleep(0.1)
+            else:
+                start_button_hold = False
+                    
+            time.sleep(0.05)
 
 
 class StandbyState(State):
@@ -148,13 +187,14 @@ class StandbyState(State):
                 "user_active",
                 "user_stop",
                 "imu_failure",
+                "joint_states_failure",
                 "fall_detected",
                 "emergency_stop",
             ]
         )
 
     def execute(self, blackboard: Blackboard):
-        blackboard["robot_state"] = "standby"
+        blackboard["robot_state"] = "STANDBY"
         yasmin.YASMIN_LOG_INFO("Robot is in standby state")
         time.sleep(1)
         while True:
@@ -162,6 +202,11 @@ class StandbyState(State):
             imu_health = check_imu_health(blackboard)
             if imu_health == "imu_failure":
                 return "imu_failure"
+            
+            # check for joint states failure
+            joint_states_health = check_joint_states_health(blackboard)
+            if joint_states_health == "joint_states_failure":
+                return "joint_states_failure"
 
             # check for user stop
             if blackboard.get("joy_state") == "stop":
@@ -180,7 +225,7 @@ class StandbyState(State):
             if blackboard.get("joy_state") == "emergency_stop":
                 return "emergency_stop"
 
-            time.sleep(0.1)
+            time.sleep(0.05)
 
 
 class ActiveState(State):
@@ -191,11 +236,12 @@ class ActiveState(State):
                 "imu_failure",
                 "user_standby",
                 "emergency_stop",
+                "joint_states_failure",
             ]
         )
 
     def execute(self, blackboard: Blackboard):
-        blackboard["robot_state"] = "active"
+        blackboard["robot_state"] = "ACTIVE"
         yasmin.YASMIN_LOG_INFO("Robot is in active state")
         time.sleep(1)
 
@@ -204,6 +250,11 @@ class ActiveState(State):
             imu_health = check_imu_health(blackboard)
             if imu_health == "imu_failure":
                 return "imu_failure"
+            
+            # check for joint states failure
+            joint_states_health = check_joint_states_health(blackboard)
+            if joint_states_health == "joint_states_failure":
+                return "joint_states_failure"
 
             # check for fall detection
             fall_detection_state = fall_detection(blackboard)
@@ -226,7 +277,7 @@ class FallenState(State):
         super().__init__(outcomes=["reset", "emergency_stop", "stop"])
 
     def execute(self, blackboard: Blackboard):
-        blackboard["robot_state"] = "fallen"
+        blackboard["robot_state"] = "FALLEN"
         yasmin.YASMIN_LOG_INFO("Robot is in fallen state")
         time.sleep(1)
 
@@ -251,7 +302,7 @@ class ErrorState(State):
         super().__init__(outcomes=["recovered", "stop", "emergency_stop"])
 
     def execute(self, blackboard: Blackboard):
-        blackboard["robot_state"] = "error"
+        blackboard["robot_state"] = "ERROR"
         yasmin.YASMIN_LOG_INFO("Robot is in error state")
         time.sleep(1)
 
@@ -275,8 +326,8 @@ class StopState(State):
         super().__init__(outcomes=["reset"])
 
     def execute(self, blackboard: Blackboard):
-        blackboard["robot_state"] = "emergency"
-        yasmin.YASMIN_LOG_INFO("Robot is in emergency state")
+        blackboard["robot_state"] = "STOP"
+        yasmin.YASMIN_LOG_INFO("Robot is in stop state")
         time.sleep(1)
 
         while True:

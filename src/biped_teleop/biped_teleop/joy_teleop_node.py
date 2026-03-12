@@ -44,6 +44,7 @@ class ACTIONS:
     LINEAR_X = "linear_x"
     LINEAR_Y = "linear_y"
     YAW = "yaw"
+    DEADMEN = "deadmen"
     LINEAR_SPEED_SCALE_CHANGE = "linear_speed_scale_change"
     ANGULAR_SPEED_SCALE_CHANGE = "angular_speed_scale_change"
 
@@ -201,6 +202,11 @@ class TeleopNode(Node):
         """
         if self.joy_msg_timestamp is None:
             self.get_logger().warn("No joystick data received.")
+            return
+
+        # deadmen check
+        if self.cmd_map[ACTIONS.DEADMEN]["value"] == 0.0:
+            self.vel_publisher.publish(TwistStamped())  # publish zero velocity
             return
 
         lin_speed_x = BIPED_SPEED.LINEAR_SPEED_X

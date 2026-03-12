@@ -33,16 +33,17 @@
       locomotion_control:
         linear_x: "left_stick_y"       # Forward/Backward
         linear_y: "left_stick_x"       # Strafe Left/Right
-        yaw: "right_stick_y"        # Strafe Left/Right (D-Pad)
+        yaw: "right_stick_y"           # Strafe Left/Right (D-Pad)
+        deadmen: "r1_trigger"          # Hold to enable movement
 
 
       scale_control:
         linear_speed_scale_change: "dpad_y"
         angular_speed_scale_change: "dpad_x"
 
+
     functional_control_map:
       state:
-        deadmen: "r1_trigger"
         start: "start"
         stop: "cross"
         standby: "square"

@@ -13,10 +13,3 @@ test for shared memory across different processes
         - read_imu_shared_memory_cpp.py
         - read_imu_shared_memory_python.py
 
-
-yasmin robot states
-    - python
-        - robot_states_fsm_python.py
-        - robot_states.py
-    - xml
-        - robot_states.xml
