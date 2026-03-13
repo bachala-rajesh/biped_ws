@@ -1,0 +1,11 @@
+<library path="biped_fsm_plugins">
+  <class type="biped_fsm::DemoInitState" base_class_type="yasmin::State">
+    <description>Init State Demo</description>
+  </class>
+  <class type="biped_fsm::DemoPassiveState" base_class_type="yasmin::State">
+    <description>Passive State Demo</description>
+  </class>
+  <class type="biped_fsm::DemoStandbyState" base_class_type="yasmin::State">
+    <description>Standby State Demo</description>
+  </class>
+</library>

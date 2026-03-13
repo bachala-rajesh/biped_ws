@@ -1,0 +1,13 @@
+<StateMachine name="DemoStates" start_state="INIT" outcomes="END">
+    <State name="INIT" class="biped_fsm::DemoInitState">
+        <Transition from="ready" to="PASSIVE"/>
+    </State>
+
+    <State name="PASSIVE" class="biped_fsm::DemoPassiveState">
+        <Transition from="user_start" to="STANDBY"/>
+    </State>
+
+    <State name="STANDBY" class="biped_fsm::DemoStandbyState">
+        <Transition from="stop" to="END"/>
+    </State>
+</StateMachine>

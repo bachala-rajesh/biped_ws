@@ -375,7 +375,7 @@ def main(args=None):
     # create FSM from xml
     factory = YasminFactory()
     state_machine = factory.create_sm_from_file(robot_states_xml_path)
-    state_machine.set_sigint_handler(True)
+    state_machine.set_sigint_handler(False)
 
     # publish FSM to viewer
     YasminViewerPub(state_machine, "robot_states")
@@ -383,7 +383,6 @@ def main(args=None):
     spin_thread = threading.Thread(target=executor.spin, daemon=True)
     spin_thread.start()
 
-    state_machine.set_sigint_handler(False)
 
     # 2. Define an unstoppable Python signal interrupt
     def hard_shutdown(sig, frame):
