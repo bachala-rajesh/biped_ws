@@ -15,6 +15,10 @@ find_package(rclcpp REQUIRED)
 find_package(yasmin_viewer REQUIRED)
 find_package(yasmin_factory REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 
 if(BUILD_TESTING)
@@ -45,7 +49,7 @@ install(PROGRAMS
 
 
 # Build the shared library for the plugins
-add_library(biped_fsm_plugins SHARED src/demo_states_plugin.cpp)
+add_library(biped_fsm_plugins SHARED src/export_fsm_states_plugin.cpp)
 target_include_directories(biped_fsm_plugins PUBLIC include)
 ament_target_dependencies(biped_fsm_plugins 
   rclcpp 
@@ -53,21 +57,47 @@ ament_target_dependencies(biped_fsm_plugins
   pluginlib
 )
 
-# 3. Tell ROS 2 where the plugin XML file is
+# Tell ROS 2 where the plugin XML file is
 pluginlib_export_plugin_description_file(yasmin plugins.xml)
 
-# 4. Install the plugin library
+# Install the plugin library
 install(TARGETS biped_fsm_plugins
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# ---------- c++ executable -----------
-add_executable(simple_fsm_demo src/simple_fsm_demo.cpp)
-ament_target_dependencies(simple_fsm_demo yasmin rclcpp yasmin_viewer yasmin_factory)
+# ---------- c++ related -----------
+include_directories(include)
 
+add_executable(state_manager_node src/state_manager.cpp)
+ament_target_dependencies(state_manager_node 
+                            rclcpp 
+                            yasmin 
+                            yasmin_viewer 
+                            yasmin_factory
+                            sensor_msgs
+                            std_msgs
+                            geometry_msgs
+                            tf2_ros
+                            ${Boost_LIBRARIES}
+                            )
+
+
+add_executable(test_fsm_shm_node src/test_fsm_shm.cpp)
+ament_target_dependencies(test_fsm_shm_node 
+                            rclcpp 
+                            yasmin 
+                            yasmin_viewer 
+                            yasmin_factory
+                            sensor_msgs
+                            std_msgs
+                            geometry_msgs
+                            tf2_ros
+                            ${Boost_LIBRARIES}
+                            )
 
 install(TARGETS
-  simple_fsm_demo
+  state_manager_node
+  test_fsm_shm_node
   DESTINATION lib/${PROJECT_NAME}
 )
 # -------------------------------------

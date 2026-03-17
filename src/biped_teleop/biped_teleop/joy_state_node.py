@@ -60,7 +60,7 @@ class TeleopNode(Node):
         self.joy_subscriber = self.create_subscription(
             Joy, "joy", self.joy_callback, 10, callback_group=self.joy_callback_group
         )
-        self.joy_state_publisher = self.create_publisher(String, "joy_state", 10)
+        self.joy_state_publisher = self.create_publisher(String, "/joy/state", 10)
 
         # timer
         self.timer_ = self.create_timer(0.1, self.timer_callback)

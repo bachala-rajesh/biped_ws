@@ -6,23 +6,11 @@
 // Standard cache line size for Jetson Orin NX (ARM Cortex-A78AE)
 constexpr size_t CACHE_LINE_SIZE = 64;
 
-enum class RobotState : uint8_t {
-    INIT = 10, 
-    PASSIVE = 20, 
-    STANDBY = 30, 
-    ACTIVE = 40,
-    FALLEN = 50, 
-    ERROR = 60, 
-    STOP = 70
-};
-
-// Thread 1 can write to this...
-struct alignas(CACHE_LINE_SIZE) StateCommand {
+struct alignas(CACHE_LINE_SIZE) RobotStateCommand {
     std::atomic<uint32_t> seq_counter{0}; // Sequence counter to avoid race conditions
-    RobotState current_state;
+    uint8_t current_state;
 };
 
-// ...while Thread 2 writes to this, with zero CPU wait time.
 struct alignas(CACHE_LINE_SIZE) VelocityCommand {
     std::atomic<uint32_t> seq_counter{0};
     float linear_x;
@@ -34,16 +22,14 @@ struct alignas(CACHE_LINE_SIZE) VelocityCommand {
 struct alignas(CACHE_LINE_SIZE) ImuData {
     std::atomic<uint32_t> seq_counter{0};
     float orientation[3];         // roll, pitch, yaw
-    float angular_velocity[3];    // x, y, z
-    float linear_acceleration[3]; // x, y, z
-    // 40 bytes total. Safely fits inside one 64-byte cache line.
+    // 12 bytes for orientation + 4 bytes for seq_counter = 16 bytes total. The compiler pads the remaining 48 bytes automatically.
 };
 
 
 
 // The main Shared Memory block that groups them all together
 struct BipedSharedMemory {
-    StateCommand state;
+    RobotStateCommand robot_state;
     VelocityCommand cmd_vel;
     ImuData imu;
 };

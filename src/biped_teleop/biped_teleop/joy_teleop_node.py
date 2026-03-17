@@ -2,7 +2,7 @@
 """teleop node: joystick-to-velocity for SO101 robot.
 
 Subscribes to /joy, applies deadzone and control mapping, and publishes
-TwistStamped velocity commands to cmd_vel. Uses a multi-threaded executor
+TwistStamped velocity commands to /joy/cmd. Uses a multi-threaded executor
 so joy callback and timer callback run in parallel.
 """
 
@@ -80,7 +80,7 @@ class TeleopNode(Node):
         self.joy_subscriber = self.create_subscription(
             Joy, "joy", self.joy_callback, 10, callback_group=self.joy_callback_group
         )
-        self.vel_publisher = self.create_publisher(TwistStamped, "/joy_cmd", 10)
+        self.vel_publisher = self.create_publisher(TwistStamped, "/joy/cmd", 10)
 
         # timer
         self.timer_ = self.create_timer(0.1, self.timer_callback)
@@ -204,9 +204,14 @@ class TeleopNode(Node):
             self.get_logger().warn("No joystick data received.")
             return
 
+        ##### create speed command #####
+        vel_cmd = TwistStamped()
+        vel_cmd.header.stamp = self.joy_msg_timestamp
+        # vel_cmd.header.frame_id = "base_link"
+
         # deadmen check
         if self.cmd_map[ACTIONS.DEADMEN]["value"] == 0.0:
-            self.vel_publisher.publish(TwistStamped())  # publish zero velocity
+            self.vel_publisher.publish(vel_cmd)  # publish zero velocity
             return
 
         lin_speed_x = BIPED_SPEED.LINEAR_SPEED_X
@@ -241,11 +246,6 @@ class TeleopNode(Node):
             max(ang_speed, -BIPED_SPEED.MAX_ANGULAR_SPEED),
             BIPED_SPEED.MAX_ANGULAR_SPEED,
         )
-
-        ##### create speed command #####
-        vel_cmd = TwistStamped()
-        vel_cmd.header.stamp = self.joy_msg_timestamp
-        # vel_cmd.header.frame_id = "base_link"
 
         # copy sign of the joystick value to the speed command
         if self.cmd_map[ACTIONS.LINEAR_X]["value"] != 0.0:

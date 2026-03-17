@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Finite State Machine for the robot states implemented for Biped robot. 
+Finite State Machine for the robot states implemented for Biped robot.
 Common blackboard is shared with the ros2 node implemented in robot_states_fsm_python.py
 """
 
-#TODO:
+# TODO:
 # - add joint states timer check
-
 
 import time
 import yasmin
@@ -43,6 +42,7 @@ def check_imu_health(blackboard):
         )
         return "imu_failure"
     return None
+
 
 def check_joint_states_health(blackboard):
     """
@@ -93,7 +93,9 @@ def fall_detection(blackboard):
 
 class InitState(State):
     def __init__(self):
-        super().__init__(outcomes=["ready", "imu_failure", "joy_failure", "joint_states_failure"])
+        super().__init__(
+            outcomes=["ready", "imu_failure", "joy_failure", "joint_states_failure"]
+        )
 
     def execute(self, blackboard: Blackboard):
 
@@ -112,7 +114,11 @@ class InitState(State):
             joy_health = check_joy_health(blackboard)
             joint_states_health = check_joint_states_health(blackboard)
 
-            if imu_health != "imu_failure" and joy_health != "joy_failure" and joint_states_health != "joint_states_failure":
+            if (
+                imu_health != "imu_failure"
+                and joy_health != "joy_failure"
+                and joint_states_health != "joint_states_failure"
+            ):
                 break
 
             if time.time() - last_time > WAIT_TIME_INTERVAL:
@@ -135,7 +141,15 @@ class InitState(State):
 
 class PassiveState(State):
     def __init__(self):
-        super().__init__(outcomes=["user_start", "imu_failure", "fall_detected", "joint_states_failure", "stop"])
+        super().__init__(
+            outcomes=[
+                "user_start",
+                "imu_failure",
+                "fall_detected",
+                "joint_states_failure",
+                "stop",
+            ]
+        )
 
     def execute(self, blackboard: Blackboard):
         blackboard["robot_state"] = "PASSIVE"
@@ -150,7 +164,7 @@ class PassiveState(State):
             imu_health = check_imu_health(blackboard)
             if imu_health == "imu_failure":
                 return "imu_failure"
-            
+
             # check for joint states failure
             joint_states_health = check_joint_states_health(blackboard)
             if joint_states_health == "joint_states_failure":
@@ -160,7 +174,7 @@ class PassiveState(State):
             fall_detection_state = fall_detection(blackboard)
             if fall_detection_state == "fall_detected":
                 return "fall_detected"
-            
+
             # check for user stop
             if blackboard.get("joy_state") == "stop":
                 return "stop"
@@ -176,7 +190,7 @@ class PassiveState(State):
                         return "user_start"
             else:
                 start_button_hold = False
-                    
+
             time.sleep(0.05)
 
 
@@ -202,7 +216,7 @@ class StandbyState(State):
             imu_health = check_imu_health(blackboard)
             if imu_health == "imu_failure":
                 return "imu_failure"
-            
+
             # check for joint states failure
             joint_states_health = check_joint_states_health(blackboard)
             if joint_states_health == "joint_states_failure":
@@ -250,7 +264,7 @@ class ActiveState(State):
             imu_health = check_imu_health(blackboard)
             if imu_health == "imu_failure":
                 return "imu_failure"
-            
+
             # check for joint states failure
             joint_states_health = check_joint_states_health(blackboard)
             if joint_states_health == "joint_states_failure":

@@ -1,51 +1,58 @@
 <StateMachine name="RobotStates"  start_state="INIT" outcomes="SHUTDOWN">
 
-    <State name="INIT" type="py" module="biped_fsm.robot_fsm_states" class="InitState">
+    <State name="INIT" class="biped_fsm::InitState">
         <Transition from="ready" to="PASSIVE"/>
         <Transition from="imu_failure" to="ERROR"/>
         <Transition from="joint_states_failure" to="ERROR"/>
         <Transition from="joy_failure" to="ERROR"/>
+        <Transition from="system_shutdown" to="SHUTDOWN"/>
     </State>
 
-    <State name="PASSIVE" type="py" module="biped_fsm.robot_fsm_states" class="PassiveState">
+    <State name="PASSIVE" class="biped_fsm::PassiveState">
         <Transition from="user_start" to="STANDBY"/>
         <Transition from="imu_failure" to="ERROR"/>
         <Transition from="joint_states_failure" to="ERROR"/>
         <Transition from="fall_detected" to="FALLEN"/>
-        <Transition from="stop" to="STOP"/>
+        <Transition from="user_stop" to="STOP"/>
+        <Transition from="system_shutdown" to="SHUTDOWN"/>
     </State>
 
-    <State name="STANDBY" type="py" module="biped_fsm.robot_fsm_states" class="StandbyState">
+    <State name="STANDBY" class="biped_fsm::StandbyState">
         <Transition from="user_active" to="ACTIVE"/>
         <Transition from="user_stop" to="PASSIVE"/>
         <Transition from="imu_failure" to="ERROR"/>
         <Transition from="joint_states_failure" to="ERROR"/>
         <Transition from="fall_detected" to="FALLEN"/>
         <Transition from="emergency_stop" to="STOP"/>
+        <Transition from="system_shutdown" to="SHUTDOWN"/>
     </State>
 
-    <State name="ACTIVE" type="py" module="biped_fsm.robot_fsm_states" class="ActiveState">
+    <State name="ACTIVE" class="biped_fsm::ActiveState">
         <Transition from="fall_detected" to="FALLEN"/>
         <Transition from="imu_failure" to="ERROR"/>
         <Transition from="joint_states_failure" to="ERROR"/>
         <Transition from="user_standby" to="STANDBY" />
         <Transition from="emergency_stop" to="STOP"/>
+        <Transition from="system_shutdown" to="SHUTDOWN"/>
     </State>
 
-    <State name="FALLEN" type="py" module="biped_fsm.robot_fsm_states" class="FallenState">
+    <State name="FALLEN" class="biped_fsm::FallenState">
         <Transition from="reset" to="INIT"/>
         <Transition from="emergency_stop" to="STOP"/>
-        <Transition from="stop" to="STOP"/>
+        <Transition from="user_stop" to="STOP"/>
+        <Transition from="system_shutdown" to="SHUTDOWN"/>
     </State>
 
-    <State name="ERROR" type="py" module="biped_fsm.robot_fsm_states" class="ErrorState">
+    <State name="ERROR" class="biped_fsm::ErrorState">
         <Transition from="recovered" to="INIT"/>
         <Transition from="emergency_stop" to="STOP"/>
-        <Transition from="stop" to="STOP"/>
+        <Transition from="user_stop" to="STOP"/>
+        <Transition from="system_shutdown" to="SHUTDOWN"/>
     </State>
 
-    <State name="STOP" type="py" module="biped_fsm.robot_fsm_states" class="StopState">
+    <State name="STOP" class="biped_fsm::StopState">
         <Transition from="reset" to="INIT"/>
+        <Transition from="system_shutdown" to="SHUTDOWN"/>
     </State>
 
 </StateMachine>
