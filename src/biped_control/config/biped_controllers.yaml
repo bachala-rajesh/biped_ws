@@ -23,13 +23,15 @@ trajectory_controller:
 
     command_interfaces:
       - position
+      - velocity
 
     state_interfaces:
       - position
+      - velocity
 
     constraints:
       goal_time: 0.5
-      stopped_velocity_tolerance: 0.01
+      stopped_velocity_tolerance: 0.1
 
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
@@ -43,6 +45,8 @@ joints_position_controller:
       - right_hip_pitch_joint
       - right_hip_roll_joint
       - right_knee_joint
+
+
 
 
 

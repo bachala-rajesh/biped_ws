@@ -1,4 +1,4 @@
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_WARN
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 // 1. You MUST define this before including spdlog to enable SPDLOG_DEBUG
 
 #include <spdlog/spdlog.h>
@@ -14,7 +14,7 @@
 #include <thread>
 #include <chrono>
 #include "motor_structs.h"
-#include "sanpo_hardware_interface.h"
+#include "sanpo_interface.h"
 
 using Clock = std::chrono::steady_clock;
 
@@ -36,7 +36,7 @@ int main() {
     // Set the new pattern (Level, Line Number, Message)
     // spdlog::set_pattern("[%^%l%$] [Line %#] %v");
     spdlog::set_pattern("%^[%l] [Line %#] %v%$");
-    spdlog::set_level(spdlog::level::info);
+    spdlog::set_level(spdlog::level::debug); // Set global log level to debug to see debug messages
 
     // 3. Use uppercase macros to capture the exact line number
     SPDLOG_INFO("Test of helper script of hardware interface.");
@@ -53,8 +53,8 @@ int main() {
     }
 
 
-    // init SanpoHardwareInterface instance
-    SanpoHardwareInterface sanpo_comm(port, baud, can_channel, test_motors, motor_states);
+    // init SanpoInterface instance
+    SanpoInterface sanpo_comm(port, baud, can_channel, test_motors, motor_states);
 
     // connect to the sanpo board
     if (!sanpo_comm.connect_sanpo()) {
@@ -88,7 +88,7 @@ int main() {
     double omega = 2.0 * M_PI / period;
 
     // timing setup (100 hz)
-    const int loop_rate_hz = 200;
+    const int loop_rate_hz = 300;
     const auto loop_duration = std::chrono::microseconds(1000000 / loop_rate_hz);
     const double test_duration_seconds = 12.0;
 
@@ -116,6 +116,7 @@ int main() {
         }
         sanpo_comm.write_motor_commands(motor_commands);
 
+        // std::this_thread::sleep_for(std::chrono::microseconds(500)); // small sleep to allow the command to be sent before reading response
         // read the response and update motor states
         sanpo_comm.update_motor_states();
         // log the updated motor state for debug

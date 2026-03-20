@@ -2,7 +2,7 @@
   <robot name="bipedal_robot">
     <ros2_control name="real_biped_ros2_control" type="system">
       <hardware>
-        <plugin>biped_hardware_interface/BipedSanpoHardwareInterfaceMultiThreaded</plugin>
+        <plugin>biped_hardware_interface/BipedSanpoHardwareInterface</plugin>
         <param name="left_leg_port">/dev/biped_sanpo_left_port</param>
         <param name="right_leg_port">/dev/biped_sanpo_right_port</param>
         <param name="baud_rate">1000000</param>
@@ -10,55 +10,31 @@
 
       <joint name="left_hip_pitch_joint">
         <command_interface name="position" />
-        <command_interface name="velocity" />
-        <command_interface name="effort" />
-        <command_interface name="kp" />
-        <command_interface name="kd" />
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>
       <joint name="left_hip_roll_joint">      
         <command_interface name="position" />
-        <command_interface name="velocity" />
-        <command_interface name="effort" />
-        <command_interface name="kp" />
-        <command_interface name="kd" />
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>
       <joint name="left_knee_joint">      
         <command_interface name="position" />
-        <command_interface name="velocity" />
-        <command_interface name="effort" />
-        <command_interface name="kp" />
-        <command_interface name="kd" />
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>
       <joint name="right_hip_pitch_joint">
         <command_interface name="position" />
-        <command_interface name="velocity" />
-        <command_interface name="effort" />
-        <command_interface name="kp" />
-        <command_interface name="kd" />
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>
       <joint name="right_hip_roll_joint">
         <command_interface name="position" />
-        <command_interface name="velocity" />
-        <command_interface name="effort" />
-        <command_interface name="kp" />
-        <command_interface name="kd" />
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>
       <joint name="right_knee_joint">
         <command_interface name="position" />
-        <command_interface name="velocity" />
-        <command_interface name="effort" />
-        <command_interface name="kp" />
-        <command_interface name="kd" />
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>

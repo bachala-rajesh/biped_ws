@@ -19,7 +19,8 @@ find_package(spdlog REQUIRED)
 add_library(
   biped_hardware_interface
   SHARED
-  src/biped_sanpo_hardware_interface.cpp
+  src/biped_sanpo_hardware_interface_single_threaded.cpp
+  src/biped_sanpo_hardware_interface_multi_threaded.cpp
 )
 target_include_directories(
   biped_hardware_interface
@@ -41,7 +42,8 @@ ament_target_dependencies(
 target_compile_definitions(biped_hardware_interface PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 
 pluginlib_export_plugin_description_file(
-  hardware_interface biped_hardware_interface.xml)
+  hardware_interface biped_hardware_interface.xml
+)
 
 install(
   TARGETS
@@ -59,6 +61,7 @@ install(
 
 ament_export_include_directories(
   include
+  src
 )
 ament_export_libraries(
   biped_hardware_interface
@@ -67,7 +70,7 @@ ament_export_dependencies(
   hardware_interface
   pluginlib
   rclcpp
-  rclcpp_lifecycle
+  rclcpp_lifecyclebiped_hardware_interface
   serial
   fmt
   ros2_fmt_logger
@@ -79,23 +82,40 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables (ROS nodes)
 install(PROGRAMS
   biped_hardware_interface/test_hardware_interface_position_controller_sine_test.py
-  
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# add_executable(test_sanpo_hardware_interface src/test_sanpo_hardware_interface.cpp)
-# ament_target_dependencies(test_sanpo_hardware_interface 
-#   serial 
-# )
-# target_link_libraries(test_sanpo_hardware_interface
-#   fmt::fmt
-#   spdlog::spdlog
-# )
+add_executable(sine_test_sanpo_interface test/sine_test_sanpo_interface.cpp)
+target_include_directories(sine_test_sanpo_interface
+  PRIVATE
+  include/biped_hardware_interface
+)
+ament_target_dependencies(sine_test_sanpo_interface 
+  serial 
+)
+target_link_libraries(sine_test_sanpo_interface
+  fmt::fmt  
+  spdlog::spdlog
+)
+
+add_executable(test_sanpo_interface test/test_sanpo_interface.cpp)
+target_include_directories(test_sanpo_interface
+  PRIVATE
+  include/biped_hardware_interface
+)
+ament_target_dependencies(test_sanpo_interface 
+  serial 
+)
+target_link_libraries(test_sanpo_interface
+  fmt::fmt  
+  spdlog::spdlog
+)
 
 
 # Install the executable so you can run it
 install(TARGETS 
-          # test_sanpo_hardware_interface
+        sine_test_sanpo_interface
+        test_sanpo_interface
   DESTINATION lib/${PROJECT_NAME}
 )
 

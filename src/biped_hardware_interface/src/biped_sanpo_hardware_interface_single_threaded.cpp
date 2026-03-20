@@ -13,10 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_WARN
+
+
 #include <limits>
 #include <vector>
 
-#include "biped_hardware_interface/biped_sanpo_hardware_interface.hpp"
+#include "biped_hardware_interface/biped_sanpo_hardware_interface_single_threaded.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include <sstream>
@@ -24,7 +27,7 @@
 
 namespace biped_hardware_interface
 {
-hardware_interface::CallbackReturn BipedSanpoHardwareInterface::on_init(
+hardware_interface::CallbackReturn BipedSanpoHardwareInterfaceSingleThreaded::on_init(
   const hardware_interface::HardwareInfo & info)
 {
   if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS)
@@ -43,7 +46,7 @@ hardware_interface::CallbackReturn BipedSanpoHardwareInterface::on_init(
     baudrate_ = std::stoi(info_.hardware_parameters["baud_rate"]);
   } catch(const std::exception & e) {
     RCLCPP_FATAL(
-        rclcpp::get_logger("BipedSanpoHardwareInterface"),
+        rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"),
         "Failed to read hardware parameters: %s",
         e.what());
     return CallbackReturn::ERROR;
@@ -51,6 +54,10 @@ hardware_interface::CallbackReturn BipedSanpoHardwareInterface::on_init(
   hw_states_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_velocity_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_commands_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_commands_velocity_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_commands_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_commands_kp_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+  hw_commands_kd_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
   // prefill the MotorCommand vectors and the MotorState
   for (auto motor_id : left_leg_motor_ids_) {
@@ -65,41 +72,41 @@ hardware_interface::CallbackReturn BipedSanpoHardwareInterface::on_init(
   return CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn BipedSanpoHardwareInterface::on_configure(
+hardware_interface::CallbackReturn BipedSanpoHardwareInterfaceSingleThreaded::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // TODO(anyone): prepare the robot to be ready for read calls and write calls of some interfaces
   // create serial communication objects
-  left_leg_comms_ = std::make_unique<SanpoHardwareInterface>(
-                                                          left_leg_port_name_, 
-                                                          baudrate_, 
-                                                          left_leg_can_channel_, 
-                                                          left_leg_motor_ids_,
-                                                          left_leg_motor_states_
-                                                        );
+  left_leg_comms_ = std::make_unique<SanpoInterface>(
+                                                        left_leg_port_name_, 
+                                                        baudrate_, 
+                                                        left_leg_can_channel_, 
+                                                        left_leg_motor_ids_,
+                                                        left_leg_motor_states_
+                                                      );
 
-  right_leg_comms_ = std::make_unique<SanpoHardwareInterface>(
-                                                          right_leg_port_name_,
-                                                          baudrate_,
-                                                          right_leg_can_channel_,
-                                                          right_leg_motor_ids_,
-                                                          right_leg_motor_states_
-                                                        );
+  right_leg_comms_ = std::make_unique<SanpoInterface>(
+                                                        right_leg_port_name_,
+                                                        baudrate_,
+                                                        right_leg_can_channel_,
+                                                        right_leg_motor_ids_,
+                                                        right_leg_motor_states_
+                                                      );
   
   //open the serial port and perform the handshake
-  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterface"), "Opening sanpo serial ports and performing handshake");
+  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), "Opening sanpo serial ports and performing handshake");
 
   if (!left_leg_comms_->connect_sanpo() || !right_leg_comms_->connect_sanpo()) {
-    RCLCPP_ERROR(rclcpp::get_logger("BipedSanpoHardwareInterface"), "Failed to connect to SANPO ports...");
+    RCLCPP_ERROR(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), "Failed to connect to SANPO ports...");
     return CallbackReturn::ERROR;
   }
 
-  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterface"), "Connected to SANPO ports successfully for both legs.");
+  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), "Connected to SANPO ports successfully for both legs.");
 
   return CallbackReturn::SUCCESS;
 }
 
-std::vector<hardware_interface::StateInterface> BipedSanpoHardwareInterface::export_state_interfaces()
+std::vector<hardware_interface::StateInterface> BipedSanpoHardwareInterfaceSingleThreaded::export_state_interfaces()
 {
   std::vector<hardware_interface::StateInterface> state_interfaces;
   for (size_t i = 0; i < info_.joints.size(); ++i)
@@ -118,7 +125,7 @@ std::vector<hardware_interface::StateInterface> BipedSanpoHardwareInterface::exp
   return state_interfaces;
 }
 
-std::vector<hardware_interface::CommandInterface> BipedSanpoHardwareInterface::export_command_interfaces()
+std::vector<hardware_interface::CommandInterface> BipedSanpoHardwareInterfaceSingleThreaded::export_command_interfaces()
 {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
   for (size_t i = 0; i < info_.joints.size(); ++i)
@@ -126,16 +133,24 @@ std::vector<hardware_interface::CommandInterface> BipedSanpoHardwareInterface::e
     command_interfaces.emplace_back(hardware_interface::CommandInterface(
       // TODO(anyone): insert correct interfaces
       info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_position_[i]));
+    command_interfaces.emplace_back(hardware_interface::CommandInterface(
+      info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_commands_velocity_[i]));
+    command_interfaces.emplace_back(hardware_interface::CommandInterface(
+      info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_effort_[i]));
+    command_interfaces.emplace_back(hardware_interface::CommandInterface(
+      info_.joints[i].name, "kp", &hw_commands_kp_[i]));
+    command_interfaces.emplace_back(hardware_interface::CommandInterface(
+      info_.joints[i].name, "kd", &hw_commands_kd_[i]));
   }
-
+    
   return command_interfaces;
 }
 
-hardware_interface::CallbackReturn BipedSanpoHardwareInterface::on_activate(
+hardware_interface::CallbackReturn BipedSanpoHardwareInterfaceSingleThreaded::on_activate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // TODO(anyone): prepare the robot to receive commands
-  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterface"), "Activating motors...");
+  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), "Activating motors...");
 
   // Attempt to enable both leg motors
   const uint8_t max_attempts = 3;
@@ -170,12 +185,12 @@ hardware_interface::CallbackReturn BipedSanpoHardwareInterface::on_activate(
     }
 
     // Safety Rollback: Disable all motors if any motor failed to enable
-    RCLCPP_WARN(rclcpp::get_logger("BipedSanpoHardwareInterface"), "Rolling back: Disabling all motors as some motors failed to enable...");
+    RCLCPP_WARN(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), "Rolling back: Disabling all motors as some motors failed to enable...");
     left_leg_comms_->disable_motors();
     right_leg_comms_->disable_motors();
 
     // Print the combined error
-    RCLCPP_ERROR(rclcpp::get_logger("BipedSanpoHardwareInterface"), 
+    RCLCPP_ERROR(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), 
       "Activation failed. Motors offline: %s", ss.str().c_str());
 
     return CallbackReturn::ERROR;
@@ -190,30 +205,35 @@ hardware_interface::CallbackReturn BipedSanpoHardwareInterface::on_activate(
   // init the hw_commands_position_ for the motors to avoid a sudden jump when the robot is activated
   for (size_t i = 0; i < info_.joints.size(); ++i) {
       hw_commands_position_[i] = hw_states_position_[i];
-      RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterface"), 
+      hw_commands_velocity_[i] = 0.0; // Initialize velocity command to zero
+      hw_commands_effort_[i] = 0.0; // Initialize effort to zero
+      hw_commands_kp_[i] = KP; // Initialize kp to default
+      hw_commands_kd_[i] = KD; // Initialize kd to default
+
+      RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), 
                                     "%s: Initial command position set to current state %.3f radians, %.2f degrees",
                                     info_.joints[i].name.c_str(), hw_commands_position_[i], hw_commands_position_[i] * 180.0 / M_PI);
   }
 
 
-  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterface"), "All motors enabled successfully. Biped is ACTIVE.");
+  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), "All motors enabled successfully. Biped is ACTIVE.");
   return CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn BipedSanpoHardwareInterface::on_deactivate(
+hardware_interface::CallbackReturn BipedSanpoHardwareInterfaceSingleThreaded::on_deactivate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // TODO(anyone): prepare the robot to stop receiving commands
-  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterface"), "Deactivating the hardware interface and disabling motors...");
+  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), "Deactivating the hardware interface and disabling motors...");
 
   left_leg_comms_->disable_motors();
   right_leg_comms_->disable_motors();
 
-  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterface"), "All motors disabled successfully. Biped is INACTIVE.");
+  RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterfaceSingleThreaded"), "All motors disabled successfully. Biped is INACTIVE.");
   return CallbackReturn::SUCCESS;
 }
 
-hardware_interface::return_type BipedSanpoHardwareInterface::read(
+hardware_interface::return_type BipedSanpoHardwareInterfaceSingleThreaded::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
   // TODO(anyone): read robot states
@@ -225,7 +245,7 @@ hardware_interface::return_type BipedSanpoHardwareInterface::read(
 
 
 
-hardware_interface::return_type BipedSanpoHardwareInterface::write(
+hardware_interface::return_type BipedSanpoHardwareInterfaceSingleThreaded::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
   // TODO(anyone): write robot's commands'
@@ -233,13 +253,20 @@ hardware_interface::return_type BipedSanpoHardwareInterface::write(
   // Transfer ROS 2 commands to Left Leg MotorCommand structs
   for (size_t i = 0; i < N_LEFT_MOTORS; ++i) {
     left_leg_motor_commands_[i].position = hw_commands_position_[i];
-  
+    left_leg_motor_commands_[i].velocity = hw_commands_velocity_[i];
+    left_leg_motor_commands_[i].torque = hw_commands_effort_[i];
+    left_leg_motor_commands_[i].kp = hw_commands_kp_[i];
+    left_leg_motor_commands_[i].kd = hw_commands_kd_[i];
   }
 
   // Transfer ROS 2 commands to Right Leg MotorCommand structs
   for (size_t i = 0; i < N_RIGHT_MOTORS; ++i) {
     size_t ros_index = i + N_LEFT_MOTORS;       // Offset by number of left leg motors for the right leg
     right_leg_motor_commands_[i].position = hw_commands_position_[ros_index];
+    right_leg_motor_commands_[i].velocity = hw_commands_velocity_[ros_index];
+    right_leg_motor_commands_[i].torque = hw_commands_effort_[ros_index];
+    right_leg_motor_commands_[i].kp = hw_commands_kp_[ros_index];
+    right_leg_motor_commands_[i].kd = hw_commands_kd_[ros_index];
   }
 
   // Send the CAN frames to the hardware
@@ -250,7 +277,7 @@ hardware_interface::return_type BipedSanpoHardwareInterface::write(
 }
 
 
-void BipedSanpoHardwareInterface::read_motor_states(){
+void BipedSanpoHardwareInterfaceSingleThreaded::read_motor_states(){
   left_leg_comms_->update_motor_states();
   right_leg_comms_->update_motor_states();
 
@@ -275,4 +302,4 @@ void BipedSanpoHardwareInterface::read_motor_states(){
 #include "pluginlib/class_list_macros.hpp"
 
 PLUGINLIB_EXPORT_CLASS(
-  biped_hardware_interface::BipedSanpoHardwareInterface, hardware_interface::SystemInterface)
+  biped_hardware_interface::BipedSanpoHardwareInterfaceSingleThreaded, hardware_interface::SystemInterface)

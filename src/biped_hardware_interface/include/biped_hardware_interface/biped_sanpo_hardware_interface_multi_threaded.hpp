@@ -17,8 +17,8 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_WARN
 
 
-#ifndef BIPED_HARDWARE_INTERFACE__BIPED_SANPO_HARDWARE_INTERFACE_HPP_
-#define BIPED_HARDWARE_INTERFACE__BIPED_SANPO_HARDWARE_INTERFACE_HPP_
+#ifndef BIPED_HARDWARE_INTERFACE__BIPED_SANPO_HARDWARE_INTERFACE_MULTI_THREADED_HPP_
+#define BIPED_HARDWARE_INTERFACE__BIPED_SANPO_HARDWARE_INTERFACE_MULTI_THREADED_HPP_
 
 #include <memory>
 #include <string>
@@ -27,6 +27,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <array>
 #include <thread>
+#include <mutex>
+#include <atomic>
 
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/handle.hpp"
@@ -37,11 +39,11 @@
 
 
 #include "motor_structs.h"
-#include "sanpo_hardware_interface.h"
+#include "sanpo_interface.h"
 
 namespace biped_hardware_interface
 {
-class BipedSanpoHardwareInterface : public hardware_interface::SystemInterface
+class BipedSanpoHardwareInterfaceMultiThreaded : public hardware_interface::SystemInterface
 {
 public:
   hardware_interface::CallbackReturn on_init(
@@ -68,6 +70,14 @@ public:
 
 private:
   void read_motor_states();
+  void left_leg_thread_loop();
+  void right_leg_thread_loop();
+
+  std::thread left_leg_thread_;
+  std::thread right_leg_thread_;
+  std::mutex left_leg_mutex_;
+  std::mutex right_leg_mutex_;
+  std::atomic<bool> threads_running_{false};
 
   std::string left_leg_port_name_, right_leg_port_name_;
   uint32_t baudrate_;
@@ -89,23 +99,31 @@ private:
   std::vector<MotorCommand> right_leg_motor_commands_;
 
   // serial communication objects
-  std::unique_ptr<SanpoHardwareInterface> left_leg_comms_;
-  std::unique_ptr<SanpoHardwareInterface> right_leg_comms_;
+  std::unique_ptr<SanpoInterface> left_leg_comms_;
+  std::unique_ptr<SanpoInterface> right_leg_comms_;
 
   // interfaces position
   std::vector<double> hw_states_position_;
   std::vector<double> hw_states_velocity_;
   std::vector<double> hw_commands_position_;
+  std::vector<double> hw_commands_velocity_;
+  std::vector<double> hw_commands_effort_;
+  std::vector<double> hw_commands_kp_;
+  std::vector<double> hw_commands_kd_;
 
-  float KP= 22.0f; // position stiffness
-  float KD = 0.5f; // velocity damping
+  float KP= KP_DEAFULT; // position stiffness inital value, can be tuned later based on the hardware response
+  float KD = KD_DEAFULT; // velocity damping initial value, can be tuned later based on the hardware response
 
   uint8_t N_LEFT_MOTORS = 0;    // number of motors in the left leg, initialized to 0 and will be set based on the size of left_leg_motor_ids_
   uint8_t N_RIGHT_MOTORS = 0;   // number of motors in the right leg, initialized to 0 and will be set based on the size of right_leg_motor_ids_
+
+
+
+
 };
 
 
 
 }  // namespace biped_hardware_interface
 
-#endif  // BIPED_HARDWARE_INTERFACE__BIPED_SANPO_HARDWARE_INTERFACE_HPP_
+#endif  // BIPED_HARDWARE_INTERFACE__BIPED_SANPO_HARDWARE_INTERFACE_MULTI_THREADED_HPP_

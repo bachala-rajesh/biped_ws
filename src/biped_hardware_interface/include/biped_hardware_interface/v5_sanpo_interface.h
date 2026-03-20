@@ -1,8 +1,11 @@
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_WARN
-// for debugging change the above to SPDLOG_DEBUG
+/*
+This is the Ver-5 SANPO interface header file. 
+in the method unpack_response_and_get_motor_states() is rewritten for effciency.
 
-// TODO: improve the unpack_response_and_get_motor_states
-//      - use the iterators
+*/
+
+
+#pragma once
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -19,38 +22,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include "motor_structs.h"
-
-
-
-
-#define MIT_SET_HEADER 0x00
-#define MIT_MOVE_HEADER 0x02
-#define MIT_RX_HEADER 0x78
-
-#define SANPO_FRAME_SIZE 18
-
-
-std::array<std::uint8_t, 2> SANPO_FRAME_TAIL = {0x0d, 0x0a};
-std::array<std::uint8_t, 2> SANPO_FRAME_HEADER = {0x53, 0x54};
-std::array<std::uint8_t, 8> ENABLE_MOTOR_BYTES {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC};  
-std::array<std::uint8_t, 8> DISABLE_MOTOR_BYTES {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFD};  
-std::array<std::uint8_t, 8> ZERO_POS_BYTES {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE};  
-const std::string handshake_frame = "AT+ET\r\n";
-
-const size_t bytes_to_keep = 360;
-const size_t BUFFER_SIZE = 1024; // max buffer size
-
-// --- CAN MOTOR PROTOCOL LIMITS ---
-constexpr double P_MIN = -12.56;
-constexpr double P_MAX = 12.56;
-constexpr double V_MIN = -45.0;
-constexpr double V_MAX = 45.0;
-constexpr double KP_MIN = 0.0;
-constexpr double KP_MAX = 500.0;
-constexpr double KD_MIN = 0.0;
-constexpr double KD_MAX = 5.0;
-constexpr double T_MIN = -18.0;
-constexpr double T_MAX = 18.0;
+#include "sanpo_frames.h"
 
 
 class SanpoProtocolBuilder {
@@ -179,6 +151,7 @@ public:
 
     }
 
+    
     // get the motor state from the SANPO response frame
     static void get_motor_state_from_sanpo_frame(MotorState& state, const std::vector<uint8_t>& sanpo_response_frame, const uint8_t motor_id) {
 
@@ -201,92 +174,135 @@ public:
         state.filtered_position = std::remainder(state.raw_position, two_pi);
     }
 
-    // extract the valid 18 bytes SANPO frame from the raw rx buffer/response
-    static void unpack_response_and_get_motor_states(std::vector<MotorState>& motor_states, std::vector<uint8_t>& response, const std::vector<uint8_t>& motor_id) {
-        // logging for debug
-        SPDLOG_DEBUG("received buffer response size: {} bytes: ", response.size());
+
+    // get the motor state from the SANPO response frame
+    static void get_motor_state_from_sanpo_frame(MotorState& state, const uint8_t* sanpo_response_frame, const uint8_t motor_id) {
+        // motor_id
+        state.id = motor_id;
+
+        //extract raw integers from the frame
+        uint32_t pos_int = (sanpo_response_frame[9] << 8) | sanpo_response_frame[10];                     // 16 bits
+        uint32_t vel_int = (sanpo_response_frame[11] << 4) | (sanpo_response_frame[12] >> 4);             // 12 bits
+        uint32_t tau_int = ((sanpo_response_frame[12] & 0x0F) << 8) | sanpo_response_frame[13]; 
         
-            if (response.size() < SANPO_FRAME_SIZE) {
+        // convert raw integers back to physical floats
+        state.raw_position = uint_to_float(pos_int, P_MIN, P_MAX, 16);
+        state.velocity = uint_to_float(vel_int, V_MIN, V_MAX, 12);
+        state.torque = uint_to_float(tau_int, T_MIN, T_MAX, 12); 
+        
+        // compute filtered position
+        // state.filtered_position = (state.raw_position + M_PI) % (2 * M_PI) - M_PI; // wrap to [-pi, pi]
+        const float two_pi = 2.0f * static_cast<float>(M_PI);
+        state.filtered_position = std::remainder(state.raw_position, two_pi);
+    }
+
+
+    // extract the valid 18 bytes SANPO frame from the raw rx buffer/response
+    static void unpack_response_and_get_motor_states(std::vector<MotorState>& motor_states, std::vector<uint8_t>& response, const std::vector<uint8_t>& motor_ids) {
+        
+        if (response.size() < SANPO_FRAME_SIZE) {
             // SPDLOG_WARN("Response size {} bytes is smaller than SANPO frame size, cannot extract motor states.", response.size());
             return;
         }
 
         // track which motor IDs have been found in the response
-        std::unordered_map<int, bool> motor_id_frame_received;
-        for (int id : motor_id) {
-            motor_id_frame_received[id] = false;
+        std::array<bool, 16> expected_motors = {false}; // assuming motor IDs are from 0 to 15, adjust size if needed
+        std::array<bool, 16> recieved_motors = {false}; // to track received motor IDs in the response
+        uint8_t received_motor_count = 0; // to track how many expected motor IDs have been received in the response
+        uint8_t expected_motor_count = 0; // to track how many expected motor IDs are there in total
+
+        for (size_t id : motor_ids) {
+            if (id < expected_motors.size()) {
+                expected_motors[id] = true;
+                expected_motor_count++;
+            } else {
+                SPDLOG_WARN("Motor ID {} is out of expected range and will be ignored in the response parsing.", id);
+            }
         }
 
+        // search from the back
+        auto search_end_offset = response.size();
+
+        // response preservation variables - it will track the starting position of the unfinished response
+        bool response_preserved_status = false; // to track whether the valid response frame is preserved in the buffer after unpacking or not
+        auto response_preserved_it = response.end();
+        
 
         while (true) {
 
-            // break the loop if all the motor IDs have been found in the response
-            bool all_frames_received = std::all_of(motor_id_frame_received.begin(), motor_id_frame_received.end(), [](const auto& pair) {
-                return pair.second;
-            });
-            if (all_frames_received) break; 
+            // if the valid search space in response is smaller than the SANPO frame size, break the loop to avoid
+            if (search_end_offset < SANPO_FRAME_SIZE) break;
 
-            // break the loop if there is not enough data left in the buffer for a full frame
-            if (response.size() < SANPO_FRAME_SIZE) {
-                break;
+            // check last occurence of header frame i.e. by looping in reverse i.e from the search_end_offset to beginning of the response 
+            auto frame_header_it = response.end();
+            size_t distance_header_to_end = 0;
+            for (size_t i = search_end_offset - 1; i >= 1; --i) { 
+                size_t idx = i - 1; 
+                if (response[idx] == SANPO_FRAME_HEADER[0] && response[idx+1] == SANPO_FRAME_HEADER[1]) {
+                    frame_header_it = response.begin() + idx;
+                    distance_header_to_end = search_end_offset - idx;
+                    break;
+                }   
             }
 
-            // check last occurence of tail frame 
-            auto tail_it = std::find_end(response.begin(), response.end(), SANPO_FRAME_TAIL.begin(), SANPO_FRAME_TAIL.end());
-            if (tail_it == response.end()) break;
 
-            // check if there is enough data before the tail for a full frame or else exit the loop
-            size_t response_length_till_tail = std::distance(response.begin(), tail_it); //SNAPO frame is 18 bytes long.. the tail contains 2 bytes, so the start of the frame is 16 bytes before the tail
-            if (response_length_till_tail < (SANPO_FRAME_SIZE - 2)) {
-                break; 
-            }
+            // break the loop: 1.if the header frame is not found in the response or 2. if the remaining response before the tail is smaller than the SANPO frame size
+            if (frame_header_it == response.begin() + search_end_offset || distance_header_to_end < SANPO_FRAME_SIZE) break;
 
-            // check for header frame. if header does not match, remove the last tail and continue searching for the next tail
-            size_t frame_start = response_length_till_tail - (SANPO_FRAME_SIZE - 2);
-            if (response[frame_start] != SANPO_FRAME_HEADER[0] || response[frame_start + 1] != SANPO_FRAME_HEADER[1]) {
-                response.resize(response_length_till_tail);
+            //till now not sure that its a valid frame or not. to be sure compare the tail frame and the rx frame
+            uint8_t rx_mit_header = ((*(frame_header_it + 5) & 0x0F) << 4) | ((*(frame_header_it + 6) & 0xF0) >> 4);
+
+            if (*(frame_header_it+ SANPO_FRAME_SIZE - 2) != SANPO_FRAME_TAIL[0] || 
+                *(frame_header_it+ SANPO_FRAME_SIZE - 1) != SANPO_FRAME_TAIL[1] ||
+                  rx_mit_header != MIT_RX_HEADER) {
+                search_end_offset = frame_header_it - response.begin(); // update the search end offset to the start of the found header frame for the next iteration to search for the next header frame in the remaining response 
                 continue; 
             }
 
-            // extract the frame
-            std::vector<uint8_t>sanpo_response_frame(response.begin() + frame_start, response.begin() + frame_start + SANPO_FRAME_SIZE);
-
-            // check the rx code of the mit protocol. 
-            // if the received motor id does not match, remove the last frame and continue searching for the next frame
-            uint8_t rx_mit_header = ((response[frame_start + 5] & 0x0F) << 4) |
-                                ((response[frame_start + 6] & 0xF0) >> 4);
-            if (rx_mit_header != MIT_RX_HEADER) {
-                response.resize(frame_start); // remove the last frame from the response and continue searching for the next frame
-                continue;
+            // valid frame is found, preserve the remaining response after the valid frame for the next unpacking
+            if (!response_preserved_status) {
+                response_preserved_it = frame_header_it + SANPO_FRAME_SIZE;
+                response_preserved_status = true;
             }
+            
+            // change the end offset so that in the next loop this frame will be excluded
+            search_end_offset = frame_header_it - response.begin(); // update the search end offset to the start of the extracted frame for the next iteration to search for the next frame in the remaining response
 
             // extract the motor id from the frame- last 4 bits of byte at index 6
-            uint8_t rx_motor_id = response[frame_start + 6] & 0x0F;
-            // uint8_t rx_motor_id = sanpo_response_frame[6] & 0x0F;
-            // SPDLOG_DEBUG("Extracted motor ID from frame: {}", rx_motor_id);
+            uint8_t rx_motor_id = (*(frame_header_it + 6)) & 0x0F;
 
             // check for motor_id that has already been received in the response
-            auto map_it = motor_id_frame_received.find(rx_motor_id);
-            if (map_it != motor_id_frame_received.end() && !map_it->second) {
-                SPDLOG_DEBUG("Extracted frame: {:02x}", fmt::join(sanpo_response_frame, " "));
+            if (expected_motors[rx_motor_id] && !recieved_motors[rx_motor_id]) {
                 MotorState received_motor_state;
-                get_motor_state_from_sanpo_frame(received_motor_state, sanpo_response_frame, rx_motor_id);
+                get_motor_state_from_sanpo_frame(received_motor_state, &(*frame_header_it), rx_motor_id);
                 motor_states.push_back(received_motor_state);
-                motor_id_frame_received[rx_motor_id] = true; // mark this motor ID as received
+                recieved_motors[rx_motor_id] = true; // mark this motor ID as received
+                received_motor_count++;
+
+                // logging for debug
+                SPDLOG_DEBUG("Extracted sanpo frame: {:02x}", 
+                    fmt::join(std::vector<uint8_t>(frame_header_it, frame_header_it + SANPO_FRAME_SIZE), " "));
             }
-            else {
-                // check the another frame
-                response.resize(frame_start); // remove the last frame from the response and continue searching for the next frame
-            }
+
+            //  if all expected motor IDs have been received, break the loop
+            if (received_motor_count == expected_motor_count) break;
+
+        }
+
+        // resize the response buffer to keep only the unprocessed bytes
+        if (response_preserved_status) {
+            response.erase(response.begin(), response_preserved_it); 
         }
     }
+
+
 };
 
 
-class SanpoHardwareInterface {
+class SanpoInterface {
 public:
     // constructor
-    SanpoHardwareInterface(const std::string& port_name, 
+    SanpoInterface(const std::string& port_name, 
                         const uint32_t baud_rate, 
                         const uint8_t& can_channel, 
                         const std::vector<uint8_t>& motor_ids, 
@@ -496,7 +512,6 @@ public:
         // send all the move command frames -one by one
         for (size_t i = 0; i < motor_commands.size(); ++i) {
             send_tx_frame(sanpo_frames[i]);
-            SPDLOG_DEBUG("Sent sanpo frame for motor {}: {:02x}", motor_commands[i].id, fmt::join(sanpo_frames[i], " "));
         }
     }
 
