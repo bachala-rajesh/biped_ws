@@ -1,0 +1,29 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 200 
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    
+    blind_walk_controller:
+      type: biped_control/BlindWalkController
+
+/blind_walk_controller:
+  ros__parameters:
+    joints:
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_knee_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_knee_joint
+    
+    state_joints: []  # Empty = same as joints
+    
+    interface_name: "position"
+    
+    kp: 100.0
+    kd: 10.0
+    
+    initial_joint_positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    shm_name: "biped_shm"

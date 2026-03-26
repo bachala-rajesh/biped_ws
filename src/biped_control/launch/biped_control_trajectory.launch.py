@@ -21,7 +21,7 @@ def generate_launch_description():
     controllers_yaml = os.path.join(
         get_package_share_directory('biped_control'),
         'config',
-        'biped_controllers.yaml',
+        'biped_ros2_controllers.yaml',
     )
     
     

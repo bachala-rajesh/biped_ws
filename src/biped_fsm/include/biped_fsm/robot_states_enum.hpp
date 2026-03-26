@@ -41,13 +41,22 @@ namespace robot_states_enum {
         {"STOP", RobotState::STOP}
     };
 
-    // Helper function to keep your node completely clean
+    // Helper function to convert string to enum value
     inline uint8_t get_state_enum_value(const std::string& state_str) {
         auto it = ROBOT_STATE_MAP.find(state_str);
         if (it != ROBOT_STATE_MAP.end()) {
             return static_cast<uint8_t>(it->second);
         }
         return static_cast<uint8_t>(RobotState::ERROR); // Default safety fallback
+    }
+
+    inline std::string get_state_string(uint8_t state_value) {
+        for (const auto& pair : ROBOT_STATE_MAP) {
+            if (static_cast<uint8_t>(pair.second) == state_value) {
+                return pair.first;
+            }
+        }
+        return "UNKNOWN";
     }
 
 } // namespace robot_states_enum
