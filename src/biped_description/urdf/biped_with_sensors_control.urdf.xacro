@@ -18,6 +18,10 @@
       <xacro:include filename="$(find biped_description)/urdf/biped_real_ros2_control.urdf" />
     </xacro:if>
 
+    <xacro:if value="${'$(arg sim_mode)' == 'mock'}">
+      <xacro:include filename="$(find biped_description)/urdf/biped_mock_ros2_control.urdf" />
+    </xacro:if>
+
     <!-- robot description -->
     <xacro:include filename="$(find biped_description)/urdf/biped.urdf.xacro" />
     

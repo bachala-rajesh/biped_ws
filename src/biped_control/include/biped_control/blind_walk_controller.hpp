@@ -57,6 +57,9 @@ namespace biped_control
   static constexpr size_t CMD_KP_ITFS = 3;      //Kp command
   static constexpr size_t CMD_KD_ITFS = 4;      //Kd command
 
+  static constexpr size_t CMD_IFC_PER_JOINT = 5;
+  static constexpr size_t STATE_IFC_PER_JOINT = 2;
+
 
 
   class BlindWalkController : public controller_interface::ControllerInterface

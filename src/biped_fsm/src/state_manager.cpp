@@ -4,6 +4,8 @@ TODO:
 - add std::mutex to avoid race conditions when accessing the blackboard 
 - fill the destroy node method
 - note: the imu node is already publsihing RPY.. directly use it
+- remove the fake data generation in the timer callback
+- move the fsm states transistions file to the config directory
 */
 
 #include <random>
@@ -247,15 +249,15 @@ private:
         static std::uniform_real_distribution<double> angular_dist(-1.0, 1.0);
 
         // Simulate IMU data
-        // auto imu_msg = std::make_shared<sensor_msgs::msg::Imu>();
-        // imu_msg->header.stamp = this->get_clock()->now();
-        // tf2::Quaternion q;
-        // q.setRPY(angle_dist(gen), angle_dist(gen), angle_dist(gen)); // Roll, Pitch, Yaw
-        // imu_msg->orientation.x = q.x();
-        // imu_msg->orientation.y = q.y();
-        // imu_msg->orientation.z = q.z();
-        // imu_msg->orientation.w = q.w();
-        // imu_callback(imu_msg);
+        auto imu_msg = std::make_shared<sensor_msgs::msg::Imu>();
+        imu_msg->header.stamp = this->get_clock()->now();
+        tf2::Quaternion q;
+        q.setRPY(angle_dist(gen), angle_dist(gen), angle_dist(gen)); // Roll, Pitch, Yaw
+        imu_msg->orientation.x = q.x();
+        imu_msg->orientation.y = q.y();
+        imu_msg->orientation.z = q.z();
+        imu_msg->orientation.w = q.w();
+        imu_callback(imu_msg);
 
         // joint states data
         auto joint_states_msg = std::make_shared<sensor_msgs::msg::JointState>();
@@ -263,15 +265,15 @@ private:
         joint_states_callback(joint_states_msg);
 
         // joy cmd data
-        // auto joy_cmd_msg = std::make_shared<geometry_msgs::msg::TwistStamped>();
-        // joy_cmd_msg->twist.linear.x = linear_dist(gen);
-        // joy_cmd_msg->twist.angular.z = angular_dist(gen);
-        // joy_cmd_callback(joy_cmd_msg);
+        auto joy_cmd_msg = std::make_shared<geometry_msgs::msg::TwistStamped>();
+        joy_cmd_msg->twist.linear.x = linear_dist(gen);
+        joy_cmd_msg->twist.angular.z = angular_dist(gen);
+        joy_cmd_callback(joy_cmd_msg);
 
         // joy state data
-        // auto joy_state_msg = std::make_shared<std_msgs::msg::String>();
-        // joy_state_msg->data = "start";
-        // joy_state_callback(joy_state_msg);
+        auto joy_state_msg = std::make_shared<std_msgs::msg::String>();
+        joy_state_msg->data = "start";
+        joy_state_callback(joy_state_msg);
 
 
     }

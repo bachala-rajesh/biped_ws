@@ -46,7 +46,7 @@ controller_interface::CallbackReturn BlindWalkController::on_init()
   }
   catch (const std::exception & e)
   {
-    fprintf(stderr, "Exception thrown during controller's init with message: %s \n", e.what());
+    RCLCPP_ERROR(get_node()->get_logger(), "Exception thrown during init: %s", e.what());
     return controller_interface::CallbackReturn::ERROR;
   }
 
@@ -107,9 +107,7 @@ controller_interface::CallbackReturn BlindWalkController::on_configure(
   }
   catch (const std::exception & e)
   {
-    fprintf(
-      stderr, "Exception thrown during publisher creation at configure stage with message : %s \n",
-      e.what());
+    RCLCPP_ERROR(get_node()->get_logger(), "Exception thrown during publisher creation at configure stage: %s", e.what());
     return controller_interface::CallbackReturn::ERROR;
   }
 
@@ -169,8 +167,8 @@ controller_interface::CallbackReturn BlindWalkController::on_activate(
   // set the initial commands to prevent kickbacks
   // loop through all the joints
   for (size_t i = 0; i <  state_joints_.size(); ++i) {
-    size_t cmd_base_idx = i*5; // 5 command interfaces per joint: position, velocity, effort, Kp, Kd
-    size_t state_base_idx = i*2; // 2 state interfaces per joint: position, velocity
+    size_t cmd_base_idx = i*CMD_IFC_PER_JOINT; 
+    size_t state_base_idx = i*STATE_IFC_PER_JOINT; 
 
     // read current position from state interface
     double current_position = state_interfaces_[state_base_idx + STATE_POS_ITFS].get_value();
@@ -199,7 +197,6 @@ controller_interface::CallbackReturn BlindWalkController::on_activate(
   // start the thread to read from shared memory and write to real-time buffer
   if (shm_ptr_) {
     shm_thread_ = std::thread(&BlindWalkController::read_data_from_shm_and_write_to_RT, this, shm_ptr_);
-    shm_thread_.detach();
     thread_running_ = true;
   }
 
@@ -219,9 +216,15 @@ controller_interface::CallbackReturn BlindWalkController::on_deactivate(
     shm_ptr_ = nullptr; // reset the shared memory pointer
   }
 
-  for (size_t i = 0; i < command_interfaces_.size(); ++i)
+  for (size_t i = 0; i < state_joints_.size(); ++i)
   {
-    command_interfaces_[i].set_value(std::numeric_limits<double>::quiet_NaN());
+    // Read current position from state interface
+    double current_position = state_interfaces_[i * STATE_IFC_PER_JOINT + STATE_POS_ITFS].get_value();
+    
+    // Hold at current position (safe for both sim and real)
+    command_interfaces_[i * CMD_IFC_PER_JOINT + CMD_POS_ITFS].set_value(current_position);
+    command_interfaces_[i * CMD_IFC_PER_JOINT + CMD_VEL_ITFS].set_value(0.0);
+    command_interfaces_[i * CMD_IFC_PER_JOINT + CMD_EFF_ITFS].set_value(0.0);
   }
 
   return controller_interface::CallbackReturn::SUCCESS;
@@ -235,28 +238,31 @@ controller_interface::return_type BlindWalkController::update(
   std::vector<double> joint_positions(state_joints_.size());
   std::vector<double> joint_velocities(state_joints_.size());
 
-  // read joints_data from state interfaces 
-  for (size_t i = 0; i < state_joints_.size(); ++i) {
-    size_t state_base_idx = i*2; // 2 state interfaces per joint: position and velocity
-    joint_positions[i] = state_interfaces_[state_base_idx + STATE_POS_ITFS].get_value();
-    joint_velocities[i] = state_interfaces_[state_base_idx + STATE_VEL_ITFS].get_value();
+
+  // debugging
+  for (size_t i = 0; i < state_joints_.size(); ++i)
+  {
+    command_interfaces_[i * CMD_IFC_PER_JOINT + CMD_POS_ITFS].set_value(10.0); // set position command to 10.0 for testing
+    command_interfaces_[i * CMD_IFC_PER_JOINT + CMD_VEL_ITFS].set_value(2.0); // set velocity command to 2.0 for testing
+    command_interfaces_[i * CMD_IFC_PER_JOINT + CMD_EFF_ITFS].set_value(0.0); // set effort command to 0.0 for testing
+    command_interfaces_[i * CMD_IFC_PER_JOINT + CMD_KP_ITFS].set_value(default_kp_); // set Kp to default value
+    command_interfaces_[i * CMD_IFC_PER_JOINT + CMD_KD_ITFS].set_value(default_kd_); // set Kd to default value
   }
-
-
   // TODO(anyone): depending on number of interfaces, use definitions, e.g., `CMD_MY_ITFS`,
   // instead of a loop
   if (rt_policy_publisher_ && rt_policy_publisher_->trylock())
   {
+    rt_policy_publisher_->msg_.header.stamp = time;
     for (size_t i = 0; i < state_joints_.size(); ++i)
     {
-      rt_policy_publisher_->msg_.header.stamp = time;
-      rt_policy_publisher_->msg_.position[i] = command_interfaces_[i*5 + CMD_POS_ITFS].get_value(); // position command
-      rt_policy_publisher_->msg_.velocity[i] = command_interfaces_[i*5 + CMD_VEL_ITFS].get_value(); // velocity command
-      rt_policy_publisher_->msg_.effort[i] = command_interfaces_[i*5 + CMD_EFF_ITFS].get_value(); // effort command
-      rt_policy_publisher_->msg_.kp[i] = command_interfaces_[i*5 + CMD_KP_ITFS].get_value(); // Kp command
-      rt_policy_publisher_->msg_.kd[i] = command_interfaces_[i*5 + CMD_KD_ITFS].get_value(); // Kd command  
-      rt_policy_publisher_->unlockAndPublish();
+      size_t cmd_base_idx = i*CMD_IFC_PER_JOINT;
+      rt_policy_publisher_->msg_.position[i] = command_interfaces_[cmd_base_idx + CMD_POS_ITFS].get_value(); // position command
+      rt_policy_publisher_->msg_.velocity[i] = command_interfaces_[cmd_base_idx + CMD_VEL_ITFS].get_value(); // velocity command
+      rt_policy_publisher_->msg_.effort[i] = command_interfaces_[cmd_base_idx + CMD_EFF_ITFS].get_value(); // effort command
+      rt_policy_publisher_->msg_.kp[i] = command_interfaces_[cmd_base_idx + CMD_KP_ITFS].get_value(); // Kp command
+      rt_policy_publisher_->msg_.kd[i] = command_interfaces_[cmd_base_idx + CMD_KD_ITFS].get_value(); // Kd command  
     }
+    rt_policy_publisher_->unlockAndPublish();
   }
 
   return controller_interface::return_type::OK;

@@ -20,10 +20,8 @@ controller_manager:
     
     state_joints: []  # Empty = same as joints
     
-    interface_name: "position"
-    
-    kp: 100.0
-    kd: 10.0
+    kp: 22.0
+    kd: 1.0
     
     initial_joint_positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     shm_name: "biped_shm"
