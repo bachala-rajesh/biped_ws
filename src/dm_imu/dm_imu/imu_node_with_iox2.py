@@ -15,6 +15,9 @@ import time
 import rclpy
 from rclpy.node import Node
 
+import iceoryx2 as iox2
+from iox2_msgs.iox2_imu_msgs import IoxImuData  # Shared IMU data structure for iceoryx2 (zero-copy).
+
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Vector3Stamped, PoseStamped
 
@@ -119,6 +122,12 @@ class DmImuNode(Node):
             if self.publish_pose
             else None
         )
+
+        # ---------- iceoryx2 Publisher ----------
+        self.iox_node = iox2.NodeBuilder.new().create(iox2.ServiceType.Ipc)
+        self.iox_service = self.iox_node.service_builder(iox2.ServiceName.new("iox/imu_data")).publish_subscribe(IoxImuData).open_or_create()
+        self.iox_publisher = self.iox_service.publisher_builder().create()
+        self.get_logger().info("Initialized iceoryx2 publisher for IoxImuData on service 'iox/imu_data'")
 
         # ---------- Serial ----------
         self.ser = None
@@ -227,6 +236,16 @@ class DmImuNode(Node):
         imu.header.stamp = stamp
         imu.header.frame_id = self.frame_id
         qx, qy, qz, qw = euler_rpy_to_quat(r, p, y)
+        
+        # Publish to iceoryx2
+        iox_imu_data = IoxImuData(
+            roll = r,
+            pitch = p,
+            yaw = y
+        )
+        iox_imu_sample = self.iox_publisher.loan_uninit()
+        sample = iox_imu_sample.write_payload(iox_imu_data)
+        sample.send()
 
         # /imu/rpy
         if self.pub_rpy is not None:
@@ -401,6 +420,9 @@ class DmImuNode(Node):
 
     # ----------- Shutdown -----------
     def destroy_node(self):
+        if hasattr(self, 'iox_node'):
+            del self.iox_node  
+            
         if getattr(self, "_closing", None) is None or self._closing.is_set():
             try:
                 super().destroy_node()

@@ -12,7 +12,7 @@ def generate_launch_description():
         [
             Node(
                 package="dm_imu",
-                executable="dm_imu_node",
+                executable="dm_imu_iox_node",
                 name="dm_imu",
                 output="screen",
                 parameters=[params_file],
