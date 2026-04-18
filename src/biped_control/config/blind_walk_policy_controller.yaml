@@ -18,10 +18,6 @@ controller_manager:
       - right_hip_roll_joint
       - right_knee_joint
     
-    state_joints: []  # Empty = same as joints
-    
-    kp: 22.0
-    kd: 1.0
     
     initial_joint_positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    shm_name: "biped_shm"
+    

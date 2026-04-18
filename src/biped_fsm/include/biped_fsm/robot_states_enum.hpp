@@ -50,9 +50,9 @@ namespace robot_states_enum {
         return static_cast<uint8_t>(RobotState::ERROR); // Default safety fallback
     }
 
-    inline std::string get_state_string(uint8_t state_value) {
+    inline std::string get_state_string(RobotState state_value) {
         for (const auto& pair : ROBOT_STATE_MAP) {
-            if (static_cast<uint8_t>(pair.second) == state_value) {
+            if (pair.second == state_value) {
                 return pair.first;
             }
         }

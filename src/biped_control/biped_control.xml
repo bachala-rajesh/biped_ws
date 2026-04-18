@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<library path="biped_control">
+<library path="blind_walk_controller">
   <class name="biped_control/BlindWalkController"
          type="biped_control::BlindWalkController" 
          base_class_type="controller_interface::ControllerInterface">

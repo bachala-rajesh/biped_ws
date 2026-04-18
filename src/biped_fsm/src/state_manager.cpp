@@ -29,22 +29,19 @@ TODO:
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
 
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/mapped_region.hpp>
-
-#include "biped_fsm/biped_shared_memory_structs.hpp"
+#include "iox2/iceoryx2.hpp"
+#include "iox2_msgs/iox_fsm_states_msg.hpp"
 #include "biped_fsm/robot_states_enum.hpp"
 
 
-// namespaces
-using namespace std::chrono_literals;
-namespace bip = boost::interprocess;
 
-#define SHM_NAME "biped_shm"
 
+using namespace iox2;
 
 // global variables
 bool SHUTTING_DOWN = false;
+
+#define IOX_FSM_TOPIC "iox/fsm_data"
 
 
 
@@ -52,8 +49,9 @@ class StateManager : public rclcpp::Node {
 public:
     StateManager(std::shared_ptr<yasmin::Blackboard> blackboard) : Node("state_manager_node"), blackboard_(blackboard) {
 
-        // initialize shared memory
-        init_shared_memory();
+        // initialize iox node and publisher/subscriber
+        init_iox_services();
+        
 
         // callback groups
         imu_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -102,58 +100,33 @@ public:
         // stop the robot 
         RCLCPP_INFO(this->get_logger(), "Shutdown signal received. Stopping the robot safely...");
         
-        write_stop_state_to_shm();
-        RCLCPP_INFO(this->get_logger(), "Safely disconnecting from shared memory...");
-        mapped_region_.reset(); 
-        shm_obj_.reset();
-        shm_ptr_ = nullptr;
+        write_stop_state_to_iox();
         RCLCPP_INFO(this->get_logger(), "destroying the node...");
     }
 
-    void write_stop_state_to_shm() {
+    void write_stop_state_to_iox() {
         SHUTTING_DOWN = true;
 
-        if (shm_ptr_ != nullptr) {
-            // for safety, write the STOP state to the shared memory multiple times to ensure the policy receives it and acts accordingly
-            for (int i = 0; i < 3; ++i) {
-                shm_ptr_->robot_state.seq_counter += 1;
-                // Force the state to STOP 
-                shm_ptr_->robot_state.current_state = static_cast<uint8_t>(robot_states_enum::RobotState::STOP);
-                shm_ptr_->robot_state.seq_counter += 1;
-                RCLCPP_INFO(this->get_logger(), "Stopping the robot...");
-                std::this_thread::sleep_for(100ms); // small delay to increase chances of the policy receiving the STOP state
-            }
+        // iox2 data
+        IoxFsmData iox_fsm_data;
+        iox_fsm_data.linear_x = 0.0;
+        iox_fsm_data.linear_y = 0.0;
+        iox_fsm_data.angular_z = 0.0;
+        iox_fsm_data.current_state  = robot_states_enum::RobotState::STOP;
+
+        for (int i = 0; i < 3; ++i) {
+            // publish the iox2 data
+            auto sample = iox_fsm_publisher_->loan_uninit().value();
+            auto initialized_sample = sample.write_payload(iox_fsm_data);
+            send(std::move(initialized_sample)).value();
         }
+
+        RCLCPP_INFO(this->get_logger(), "Stopping the robot...");
+        std::this_thread::sleep_for(100ms); // small delay to increase chances of the policy receiving the STOP state
     }
 
 
 private:
-
-    void init_shared_memory() {
-        try {
-            // remove shared memory if it already exists
-            bip::shared_memory_object::remove(SHM_NAME);
-
-            // create shared memory object
-            shm_obj_ = std::make_unique<bip::shared_memory_object>(
-                bip::open_or_create, SHM_NAME, bip::read_write);
-
-            // set size of shared memory
-            shm_obj_->truncate(sizeof(BipedSharedMemory));
-
-            // map the memory to this process
-            mapped_region_ = std::make_unique<bip::mapped_region>(*shm_obj_, bip::read_write);
-            
-            // get pointer to shared memory
-            shm_ptr_ = static_cast<BipedSharedMemory*>(mapped_region_->get_address());
-
-            RCLCPP_INFO(this->get_logger(), "Shared Memory initialized successfully");
-        }
-        catch (const bip::interprocess_exception& ex) {
-            RCLCPP_ERROR(this->get_logger(), "Error initializing shared memory: %s", ex.what());
-            rclcpp::shutdown();
-        }
-    }
 
     void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg) {
         
@@ -176,12 +149,7 @@ private:
 
         blackboard_->set<bool>("imu_status", true);
 
-        // write data to the shared memory
-        shm_ptr_->imu.seq_counter += 1;
-        shm_ptr_->imu.orientation[0] = roll;
-        shm_ptr_->imu.orientation[1] = pitch;
-        shm_ptr_->imu.orientation[2] = yaw;
-        shm_ptr_->imu.seq_counter += 1;
+
 
     }
 
@@ -204,12 +172,10 @@ private:
     void joy_cmd_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
         blackboard_->set<bool>("joy_cmd_status", true);
 
-        // write data to the shared memory
-        shm_ptr_->cmd_vel.seq_counter += 1;
-        shm_ptr_->cmd_vel.linear_x = msg->twist.linear.x;
-        shm_ptr_->cmd_vel.linear_y = msg->twist.linear.y;
-        shm_ptr_->cmd_vel.angular_z = msg->twist.angular.z;
-        shm_ptr_->cmd_vel.seq_counter += 1;
+        // write the velocities to the cmd_vel
+        cmd_vel[0] = msg->twist.linear.x;
+        cmd_vel[1] = msg->twist.linear.y;
+        cmd_vel[2] = msg->twist.angular.z;
 
     }
 
@@ -233,12 +199,49 @@ private:
         fake_sensor_data();
 
         // get the current robot state from the blackboard
-        uint8_t robot_state_enum = blackboard_->get<uint8_t>("robot_state");
+        robot_states_enum::RobotState current_robot_state = blackboard_->get<robot_states_enum::RobotState>("robot_state");
 
-        // write the current robot state to the shared memory
-        shm_ptr_->robot_state.seq_counter += 1;
-        shm_ptr_->robot_state.current_state = robot_state_enum;
-        shm_ptr_->robot_state.seq_counter += 1;
+        // log the current robot state
+        RCLCPP_INFO(this->get_logger(), "Current Robot State: %s", robot_states_enum::get_state_string(current_robot_state).c_str());
+
+        // iox2 data
+        IoxFsmData iox_fsm_data;
+        if (current_robot_state == robot_states_enum::RobotState::ACTIVE) {
+            iox_fsm_data.linear_x = cmd_vel[0];
+            iox_fsm_data.linear_y = cmd_vel[1];
+            iox_fsm_data.angular_z = cmd_vel[2];
+        } else {
+            iox_fsm_data.linear_x = 0.0;
+            iox_fsm_data.linear_y = 0.0;
+            iox_fsm_data.angular_z = 0.0;
+        }
+
+        iox_fsm_data.current_state = current_robot_state;
+
+
+        // publish the iox2 data
+        auto sample = iox_fsm_publisher_->loan_uninit().value();
+        auto initialized_sample = sample.write_payload(iox_fsm_data);
+        send(std::move(initialized_sample)).value();
+    }
+
+    void init_iox_services() {
+        // create iox2 node and connect to the services
+        auto node_name = NodeName::create("fsm_publisher_node").value();
+        iox_node_ = NodeBuilder().name(node_name).create<ServiceType::Ipc>().value();
+        auto service_name = ServiceName::create(IOX_FSM_TOPIC);
+        auto fsm_service_result = iox_node_->service_builder(service_name.value()).publish_subscribe<IoxFsmData>().open_or_create();
+        if (!fsm_service_result.has_value()) {
+            auto error = fsm_service_result.error();
+            std::cerr << "Failed! Error: " 
+                    << iox2::bb::from<iox2::PublishSubscribeOpenOrCreateError, const char*>(error) 
+                    << " (code: " << static_cast<int>(error) << ")" << std::endl;
+        }
+
+        auto& iox_fsm_service = fsm_service_result.value();
+
+        iox_fsm_publisher_ = iox_fsm_service.publisher_builder().create().value();
+        std::cout << "✅ iox2 Publisher for FSM connected successfully..." << std::endl;
     }
 
     void fake_sensor_data() {
@@ -268,12 +271,12 @@ private:
         auto joy_cmd_msg = std::make_shared<geometry_msgs::msg::TwistStamped>();
         joy_cmd_msg->twist.linear.x = linear_dist(gen);
         joy_cmd_msg->twist.angular.z = angular_dist(gen);
-        joy_cmd_callback(joy_cmd_msg);
+        // joy_cmd_callback(joy_cmd_msg);
 
         // joy state data
         auto joy_state_msg = std::make_shared<std_msgs::msg::String>();
         joy_state_msg->data = "start";
-        joy_state_callback(joy_state_msg);
+        // joy_state_callback(joy_state_msg);
 
 
     }
@@ -291,11 +294,15 @@ private:
     rclcpp::CallbackGroup::SharedPtr imu_callback_group_;
     rclcpp::CallbackGroup::SharedPtr joint_states_callback_group_;
     rclcpp::CallbackGroup::SharedPtr common_non_critical_callback_group_;
+    std::array<float, 3> cmd_vel;
 
-    // Boost objects
-    std::unique_ptr<bip::shared_memory_object> shm_obj_;
-    std::unique_ptr<bip::mapped_region> mapped_region_;
-    BipedSharedMemory* shm_ptr_ = nullptr;
+    // iox2 related variables   
+    std::optional<iox2::Node<iox2::ServiceType::Ipc>> iox_node_;
+    std::optional<iox2::Publisher<iox2::ServiceType::Ipc, IoxFsmData, void>> iox_fsm_publisher_;
+    
+
+    
+    
     //------------------------------------------------------------
 
 
@@ -334,7 +341,7 @@ int main(int argc, char **argv) {
 
     // states
     blackboard->set<std::string>("joy_state", "none");
-    blackboard->set<uint8_t>("robot_state", static_cast<uint8_t>(robot_states_enum::RobotState::INIT)); // set the initial state to ACTIVE
+    blackboard->set<robot_states_enum::RobotState>("robot_state", robot_states_enum::RobotState::INIT); // set the initial state to ACTIVE
 
     // -------------------------- create the state machine --------------------------
     yasmin_factory::YasminFactory factory;

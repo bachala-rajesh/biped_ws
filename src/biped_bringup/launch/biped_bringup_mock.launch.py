@@ -50,7 +50,7 @@ def generate_launch_description() -> LaunchDescription:
         [
             DeclareLaunchArgument(
                 "use_sim_time",
-                default_value="true",
+                default_value="false",
                 description="Use simulation  clock if true",
             ),
             DeclareLaunchArgument(

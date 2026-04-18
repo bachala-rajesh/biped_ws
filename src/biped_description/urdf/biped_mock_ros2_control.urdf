@@ -17,10 +17,6 @@
     <!-- Left Leg Joints -->
     <joint name="left_hip_pitch_joint">
       <command_interface name="position" />
-      <command_interface name="velocity" />
-      <command_interface name="effort" />
-      <command_interface name="kp" />
-      <command_interface name="kd" />
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -31,10 +27,6 @@
     
     <joint name="left_hip_roll_joint">      
       <command_interface name="position" />
-      <command_interface name="velocity" />
-      <command_interface name="effort" />
-      <command_interface name="kp" />
-      <command_interface name="kd" />
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -45,10 +37,6 @@
     
     <joint name="left_knee_joint">      
       <command_interface name="position" />
-      <command_interface name="velocity" />
-      <command_interface name="effort" />
-      <command_interface name="kp" />
-      <command_interface name="kd" />
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -60,10 +48,6 @@
     <!-- Right Leg Joints -->
     <joint name="right_hip_pitch_joint">
       <command_interface name="position" />
-      <command_interface name="velocity" />
-      <command_interface name="effort" />
-      <command_interface name="kp" />
-      <command_interface name="kd" />
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -74,10 +58,6 @@
     
     <joint name="right_hip_roll_joint">
       <command_interface name="position" />
-      <command_interface name="velocity" />
-      <command_interface name="effort" />
-      <command_interface name="kp" />
-      <command_interface name="kd" />
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -88,10 +68,6 @@
     
     <joint name="right_knee_joint">
       <command_interface name="position" />
-      <command_interface name="velocity" />
-      <command_interface name="effort" />
-      <command_interface name="kp" />
-      <command_interface name="kd" />
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>

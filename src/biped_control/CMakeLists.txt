@@ -21,6 +21,8 @@ find_package(geometry_msgs REQUIRED)
 find_package(biped_fsm REQUIRED)
 find_package(parameter_traits REQUIRED)
 find_package(generate_parameter_library REQUIRED)
+find_package(iox2_msgs REQUIRED)
+find_package(iceoryx2-cxx REQUIRED)
 
 
 # ============== generate parameter library ================
@@ -37,6 +39,7 @@ add_library(blind_walk_controller
 # link the parameter library to the controller library
 target_link_libraries(blind_walk_controller
   blind_walk_controller_parameters
+  iceoryx2-cxx::static-lib-cxx
 )
 #include directories for the controller library
 target_include_directories(blind_walk_controller
@@ -58,6 +61,7 @@ ament_target_dependencies(blind_walk_controller
   biped_fsm
   parameter_traits
   generate_parameter_library
+  iox2_msgs
 )
 
 

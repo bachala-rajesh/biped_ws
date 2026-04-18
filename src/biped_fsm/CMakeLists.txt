@@ -19,6 +19,8 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(iox2_msgs REQUIRED)
+find_package(iceoryx2-cxx REQUIRED)
 
 install(DIRECTORY include/
   DESTINATION include
@@ -73,6 +75,9 @@ install(TARGETS biped_fsm_plugins
 include_directories(include)
 
 add_executable(state_manager_node src/state_manager.cpp)
+target_link_libraries(state_manager_node
+  iceoryx2-cxx::static-lib-cxx
+)
 ament_target_dependencies(state_manager_node 
                             rclcpp 
                             yasmin 
@@ -82,7 +87,7 @@ ament_target_dependencies(state_manager_node
                             std_msgs
                             geometry_msgs
                             tf2_ros
-                            ${Boost_LIBRARIES}
+                            iox2_msgs
                             )
 
 
@@ -104,6 +109,12 @@ install(TARGETS
   test_fsm_shm_node
   DESTINATION lib/${PROJECT_NAME}
 )
+
+install(DIRECTORY
+  include/
+  DESTINATION include
+)
+
 # -------------------------------------
 
 # Install launch files

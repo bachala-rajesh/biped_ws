@@ -21,6 +21,8 @@
   <depend>controller_interface</depend>
   <depend>parameter_traits</depend>
   <depend>generate_parameter_library</depend>
+  <depend>iox2_msgs</depend>
+  <depend>iceoryx2-cxx</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

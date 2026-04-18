@@ -11,36 +11,42 @@
         <state_interface name="position">
           <param name="initial_value">0.3</param>
         </state_interface>
+        <state_interface name="velocity"/>
       </joint>
       <joint name="left_hip_roll_joint">      
         <command_interface name="position" />
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
+        <state_interface name="velocity"/>
       </joint>
       <joint name="left_knee_joint">      
         <command_interface name="position" />
         <state_interface name="position">
           <param name="initial_value">0.6</param>
         </state_interface>
+        <state_interface name="velocity"/>
       </joint>
       <joint name="right_hip_pitch_joint">
         <command_interface name="position" />
         <state_interface name="position">
           <param name="initial_value">-0.3</param>
         </state_interface>
+        <state_interface name="velocity"/>
       </joint>
       <joint name="right_hip_roll_joint">
         <command_interface name="position" />
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
+        <state_interface name="velocity"/>
       </joint>
       <joint name="right_knee_joint">
         <command_interface name="position" />
         <state_interface name="position">
           <param name="initial_value">-0.6</param>
         </state_interface>
+        <state_interface name="velocity"/>
       </joint>
 
     </ros2_control>

@@ -13,6 +13,7 @@ TODO:
 #include <rclcpp/rclcpp.hpp>
 #include "biped_fsm/robot_states_enum.hpp"
 #include <math.h>
+#include "robot_states_enum.hpp"
 
 namespace biped_fsm {
 
@@ -107,7 +108,7 @@ class InitState : public yasmin::State {
 public:
     InitState() : yasmin::State({"ready", "imu_failure", "joint_states_failure", "joy_failure", "system_shutdown"}) {}
     std::string execute(std::shared_ptr<yasmin::Blackboard> blackboard) override {
-        blackboard->set<uint8_t>("robot_state", static_cast<uint8_t>(robot_states_enum::RobotState::INIT)); 
+        blackboard->set<robot_states_enum::RobotState>("robot_state", robot_states_enum::RobotState::INIT); 
 
         YASMIN_LOG_INFO("Initializing robot sensors...");
         std::this_thread::sleep_for(robot_states_config::kInitDelaySec); 
@@ -158,7 +159,7 @@ class PassiveState : public yasmin::State {
 public:
     PassiveState() : yasmin::State({"user_start", "imu_failure", "joint_states_failure", "fall_detected", "user_stop", "system_shutdown"}) {}
     std::string execute(std::shared_ptr<yasmin::Blackboard> blackboard) override {
-        blackboard->set<uint8_t>("robot_state", static_cast<uint8_t>(robot_states_enum::RobotState::PASSIVE)); 
+        blackboard->set<robot_states_enum::RobotState>("robot_state", robot_states_enum::RobotState::PASSIVE); 
 
         bool start_button_hold = false;
         std::string joystate;
@@ -212,7 +213,7 @@ public:
     StandbyState() : yasmin::State({"user_active", "user_stop", "imu_failure", "joint_states_failure", "fall_detected", "emergency_stop", "system_shutdown"}) {}
     std::string execute(std::shared_ptr<yasmin::Blackboard> blackboard) override {
 
-        blackboard->set<uint8_t>("robot_state", static_cast<uint8_t>(robot_states_enum::RobotState::STANDBY));
+        blackboard->set<robot_states_enum::RobotState>("robot_state", robot_states_enum::RobotState::STANDBY);
         std::string joystate;
 
         while (true) {
@@ -251,7 +252,7 @@ class ActiveState : public yasmin::State {
 public:
     ActiveState() : yasmin::State({"fall_detected", "imu_failure", "joint_states_failure", "user_standby", "emergency_stop", "system_shutdown"}) {}
     std::string execute(std::shared_ptr<yasmin::Blackboard> blackboard) override {
-        blackboard->set<uint8_t>("robot_state", static_cast<uint8_t>(robot_states_enum::RobotState::ACTIVE)); 
+        blackboard->set<robot_states_enum::RobotState>("robot_state", robot_states_enum::RobotState::ACTIVE); 
         std::string joystate;
 
         while (true) {
@@ -286,7 +287,7 @@ class FallenState : public yasmin::State {
 public:
     FallenState() : yasmin::State({"reset", "emergency_stop", "user_stop", "system_shutdown"}) {}
     std::string execute(std::shared_ptr<yasmin::Blackboard> blackboard) override {
-        blackboard->set<uint8_t>("robot_state", static_cast<uint8_t>(robot_states_enum::RobotState::FALLEN)); 
+        blackboard->set<robot_states_enum::RobotState>("robot_state", robot_states_enum::RobotState::FALLEN); 
         std::string joystate;
 
         while (true){
@@ -315,7 +316,7 @@ public:
     ErrorState() : yasmin::State({"recovered", "emergency_stop", "user_stop", "system_shutdown"}) {}
     std::string execute(std::shared_ptr<yasmin::Blackboard> blackboard) override {
 
-        blackboard->set<uint8_t>("robot_state", static_cast<uint8_t>(robot_states_enum::RobotState::ERROR)); 
+        blackboard->set<robot_states_enum::RobotState>("robot_state", robot_states_enum::RobotState::ERROR); 
         std::string joystate;
 
         while (true){
@@ -343,7 +344,7 @@ class StopState : public yasmin::State {
 public:
     StopState() : yasmin::State({"reset", "system_shutdown"}) {}
     std::string execute(std::shared_ptr<yasmin::Blackboard> blackboard) override {
-        blackboard->set<uint8_t>("robot_state", static_cast<uint8_t>(robot_states_enum::RobotState::STOP)); 
+        blackboard->set<robot_states_enum::RobotState>("robot_state", robot_states_enum::RobotState::STOP); 
 
         std::string joystate;
 

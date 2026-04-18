@@ -23,7 +23,13 @@
 
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
+#include <optional>
+#include "iox2/iceoryx2.hpp"
+#include "iox2_msgs/iox_imu_msgs.hpp"
+#include "iox2_msgs/iox_fsm_states_msg.hpp"
+
 
 #include "controller_interface/controller_interface.hpp"
 #include <biped_control/blind_walk_controller_parameters.hpp>
@@ -32,17 +38,12 @@
 #include "realtime_tools/realtime_buffer.hpp"
 #include "realtime_tools/realtime_publisher.hpp"
 
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/mapped_region.hpp>
-#include "biped_fsm/biped_shared_memory_structs.hpp"
-#include "biped_control/robot_data_struct.hpp"
-
-// TODO(anyone): Replace with controller specific messages
 #include "biped_msgs/msg/biped_joint_command.hpp"
-#include "biped_msgs/msg/biped_shm_data.hpp"
 #include "biped_fsm/robot_states_enum.hpp"
 
-namespace bip = boost::interprocess;
+// TODO(anyone): Replace with controller specific messages
+
+using namespace iox2;
 
 namespace biped_control
 {
@@ -52,12 +53,8 @@ namespace biped_control
 
   // name constants for command interfaces
   static constexpr size_t CMD_POS_ITFS = 0;     //position command
-  static constexpr size_t CMD_VEL_ITFS = 1;     //velocity command
-  static constexpr size_t CMD_EFF_ITFS = 2;     //effort command
-  static constexpr size_t CMD_KP_ITFS = 3;      //Kp command
-  static constexpr size_t CMD_KD_ITFS = 4;      //Kd command
 
-  static constexpr size_t CMD_IFC_PER_JOINT = 5;
+  static constexpr size_t CMD_IFC_PER_JOINT = 1;
   static constexpr size_t STATE_IFC_PER_JOINT = 2;
 
 
@@ -87,11 +84,9 @@ namespace biped_control
 
     
   private:
-    bool connect_to_shm(const std::string & shm_name );
-    void read_data_from_shm_and_write_to_RT(const BipedSharedMemory* shm_ptr);
-
-    void init_shm_buffer_with_initial_data();
     void resize_msgs_based_on_joints();
+    controller_interface::CallbackReturn init_iox2_services();
+
     
     // variables
     std::shared_ptr<blind_walk_controller::ParamListener> param_listener_;
@@ -104,20 +99,20 @@ namespace biped_control
     std::unique_ptr<ControllerCommandPublisher> rt_policy_publisher_;
     BipedJointCommand policy_commands_msg_;
     
-    // shared memory related variables
-    using BipedShmMsg = biped_msgs::msg::BipedShmData;
-    const BipedSharedMemory* shm_ptr_ = nullptr;
-    std::shared_ptr<BipedShmMsg> latest_shm_data_msg_;
-    realtime_tools::RealtimeBuffer<BipedShmMsg> shm_buffer_;
-    std::thread shm_thread_;
-    bool thread_running_ = false;
     
     // internal state variables
-    double default_kp_;
-    double default_kd_;
     std::vector<double> initial_joint_positions_;
     std::vector<std::string> state_joints_;
-    std::string robot_state_ = robot_states_enum::get_state_string(static_cast<uint8_t>(robot_states_enum::RobotState::INIT));
+    robot_states_enum::RobotState robot_state_ = robot_states_enum::RobotState::INIT;
+    
+
+    // iox2 related variables
+    std::optional<iox2::Node<iox2::ServiceType::Ipc>> iox_node_;
+    std::optional<iox2::Subscriber<iox2::ServiceType::Ipc, IoxImuData, void>> iox_imu_subscriber_;
+    std::optional<iox2::Subscriber<iox2::ServiceType::Ipc, IoxFsmData, void>> iox_fsm_subscriber_;
+
+    
+
     
   
   };

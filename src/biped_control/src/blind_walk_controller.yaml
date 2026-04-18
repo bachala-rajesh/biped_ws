@@ -48,29 +48,7 @@ blind_walk_controller:
     default_value: "",
     description: "Name of the interface used by the controller on joints and command_joints.",
     read_only: true,
-    validation: {
-      not_empty<>: null,
-      one_of<>: [["position", "velocity", "acceleration", "effort",]],
-    }
   } 
-  kp: {
-    type: double,
-    default_value: 10.0,
-    description: "Default proportional gain for all joints. This can be overridden by individual joint parameters.",
-    read_only: false,
-    validation: {
-      gt<>: [0.0],
-    }
-  }
-  kd: {
-    type: double,
-    default_value: 1.0,
-    description: "Default derivative gain for all joints. This can be overridden by individual joint parameters.",
-    read_only: false,
-    validation: {
-      gt<>: [0.0],
-    }
-  }
   shm_name: {
     type: string,
     default_value: "biped_walk_controller_shm",

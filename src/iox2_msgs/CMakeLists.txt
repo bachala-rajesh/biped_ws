@@ -49,4 +49,11 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# install headers so downstream packages can use them
+install(DIRECTORY
+  include/
+  DESTINATION include
+)
+
+ament_export_include_directories(include)
 ament_package()
