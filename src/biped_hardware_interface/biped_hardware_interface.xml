@@ -7,6 +7,8 @@
     </description>
   </class>
 
+  
+
   <class name="biped_hardware_interface/BipedSanpoHardwareInterfaceMultiThreaded"
          type="biped_hardware_interface::BipedSanpoHardwareInterfaceMultiThreaded"
          base_class_type="hardware_interface::SystemInterface">

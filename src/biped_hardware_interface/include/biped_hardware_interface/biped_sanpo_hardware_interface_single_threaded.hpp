@@ -96,10 +96,6 @@ private:
   std::vector<double> hw_states_position_;
   std::vector<double> hw_states_velocity_;
   std::vector<double> hw_commands_position_;
-  std::vector<double> hw_commands_velocity_;
-  std::vector<double> hw_commands_effort_;
-  std::vector<double> hw_commands_kp_;
-  std::vector<double> hw_commands_kd_;
 
   float KP= KP_DEAFULT; // position stiffness inital value, can be tuned later based on the hardware response
   float KD = KD_DEAFULT; // velocity damping initial value, can be tuned later based on the hardware response

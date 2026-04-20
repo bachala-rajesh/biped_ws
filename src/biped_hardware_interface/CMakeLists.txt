@@ -70,7 +70,8 @@ ament_export_dependencies(
   hardware_interface
   pluginlib
   rclcpp
-  rclcpp_lifecyclebiped_hardware_interface
+  rclcpp_lifecycle
+  biped_hardware_interface
   serial
   fmt
   ros2_fmt_logger

@@ -54,10 +54,6 @@ hardware_interface::CallbackReturn BipedSanpoHardwareInterfaceMultiThreaded::on_
   hw_states_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_states_velocity_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   hw_commands_position_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_commands_velocity_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_commands_effort_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_commands_kp_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_commands_kd_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
   // prefill the MotorCommand vectors and the MotorState
   for (auto motor_id : left_leg_motor_ids_) {
@@ -133,14 +129,6 @@ std::vector<hardware_interface::CommandInterface> BipedSanpoHardwareInterfaceMul
     command_interfaces.emplace_back(hardware_interface::CommandInterface(
       // TODO(anyone): insert correct interfaces
       info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_position_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_commands_velocity_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_effort_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      info_.joints[i].name, "kp", &hw_commands_kp_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      info_.joints[i].name, "kd", &hw_commands_kd_[i]));
   }
     
   return command_interfaces;
@@ -198,17 +186,13 @@ hardware_interface::CallbackReturn BipedSanpoHardwareInterfaceMultiThreaded::on_
 
   // update states of the motor
   for (int i = 0; i < 3; ++i) {
-    read_motor_states();
+    read_initial_motor_states();
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
   // init the hw_commands_position_ for the motors to avoid a sudden jump when the robot is activated
   for (size_t i = 0; i < info_.joints.size(); ++i) {
       hw_commands_position_[i] = hw_states_position_[i];
-      hw_commands_velocity_[i] = 0.0; // Initialize velocity command to zero
-      hw_commands_effort_[i] = 0.0; // Initialize effort to zero
-      hw_commands_kp_[i] = KP; // Initialize kp to default
-      hw_commands_kd_[i] = KD; // Initialize kd to default
 
       RCLCPP_INFO(rclcpp::get_logger("BipedSanpoHardwareInterfaceMultiThreaded"), 
                                     "%s: Initial command position set to current state %.3f radians, %.2f degrees",
@@ -281,10 +265,6 @@ hardware_interface::return_type BipedSanpoHardwareInterfaceMultiThreaded::write(
     std::lock_guard<std::mutex> lock(left_leg_mutex_);
     for (size_t i = 0; i < N_LEFT_MOTORS; ++i) {
       left_leg_motor_commands_[i].position = hw_commands_position_[i];
-      left_leg_motor_commands_[i].velocity = hw_commands_velocity_[i];
-      left_leg_motor_commands_[i].torque = hw_commands_effort_[i];
-      left_leg_motor_commands_[i].kp = hw_commands_kp_[i];
-      left_leg_motor_commands_[i].kd = hw_commands_kd_[i];
     }
   }
 
@@ -294,10 +274,6 @@ hardware_interface::return_type BipedSanpoHardwareInterfaceMultiThreaded::write(
     for (size_t i = 0; i < N_RIGHT_MOTORS; ++i) {
       size_t ros_index = i + N_LEFT_MOTORS;       // Offset by number of left leg motors for the right leg
       right_leg_motor_commands_[i].position = hw_commands_position_[ros_index];
-      right_leg_motor_commands_[i].velocity = hw_commands_velocity_[ros_index];
-      right_leg_motor_commands_[i].torque = hw_commands_effort_[ros_index];
-      right_leg_motor_commands_[i].kp = hw_commands_kp_[ros_index];
-      right_leg_motor_commands_[i].kd = hw_commands_kd_[ros_index];
     }
   }
 
@@ -319,8 +295,8 @@ void BipedSanpoHardwareInterfaceMultiThreaded::left_leg_thread_loop()
     std::this_thread::sleep_for(std::chrono::microseconds(500));
 
     {
-    std::lock_guard<std::mutex> lock(left_leg_mutex_);
-    left_leg_comms_->update_motor_states();
+      std::lock_guard<std::mutex> lock(left_leg_mutex_);
+      left_leg_comms_->update_motor_states();
     }
 
   }
@@ -341,14 +317,14 @@ void BipedSanpoHardwareInterfaceMultiThreaded::right_leg_thread_loop()
     std::this_thread::sleep_for(std::chrono::microseconds(500));
    
     {
-    std::lock_guard<std::mutex> lock(right_leg_mutex_);
-    right_leg_comms_->update_motor_states();
+      std::lock_guard<std::mutex> lock(right_leg_mutex_);
+      right_leg_comms_->update_motor_states();
     }
   }
 }
 
 
-void BipedSanpoHardwareInterfaceMultiThreaded::read_motor_states(){
+void BipedSanpoHardwareInterfaceMultiThreaded::read_initial_motor_states(){
   left_leg_comms_->update_motor_states();
   right_leg_comms_->update_motor_states();
 
