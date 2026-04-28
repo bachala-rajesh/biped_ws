@@ -1,0 +1,129 @@
+<mujoco model="SF_bipedal">
+  <option iterations="50" timestep="0.002" solver="PGS" gravity="0 0 -9.81" />
+
+  <compiler angle="radian" meshdir="meshes" eulerseq="zyx" autolimits="true" />
+
+  <visual>
+        <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+        <rgba haze="0.15 0.25 0.35 1"/>
+        <global azimuth="120" elevation="-20"/>
+  </visual>
+
+  <default>
+    <joint limited="true" damping="1.0" armature="0.01" frictionloss="0.01" />
+    
+    <geom condim="4" contype="1" conaffinity="15" friction="1.0 0.005 0.0001" solref="0.02 1" />
+    
+    <motor ctrllimited="true" />
+    <equality solref="0.001 2" />
+    <default class="visualgeom">
+      <geom material="visualgeom" condim="1" contype="0" conaffinity="0" />
+    </default>
+  </default>
+
+  <asset>
+    <mesh name="base_link" file="base_link.STL" />
+    <mesh name="left_hip_pitch_link" file="left_hip_pitch_link.STL" />
+    <mesh name="left_hip_roll_link" file="left_hip_roll_link.STL" />
+    <mesh name="left_knee_link" file="left_knee_link.STL" />
+    <mesh name="right_hip_pitch_link" file="right_hip_pitch_link.STL" />
+    <mesh name="right_hip_roll_link" file="right_hip_roll_link.STL" />
+    <mesh name="right_knee_link" file="right_knee_link.STL" />
+    <material name="visualgeom" rgba="0.5 0.9 0.2 1" />
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" width="100" height="100"/>
+    <material name="groundplane" texture="groundplane" texrepeat="10 10"/>
+  </asset>
+
+  <worldbody>
+    <light directional="true" diffuse="0.6 0.6 0.6" specular="0.2 0.2 0.2" pos="0 0 4" dir="0 0 -1" />
+    <geom name="floor" size="10 10 0.1" type="plane" material="groundplane"/>
+    <camera name="fixed" pos="0 -3.0 1.112" xyaxes="1 0 0 0 0 1" />
+    <camera name="track" mode="trackcom" pos="0 -3.0 1.112" xyaxes="1 0 0 0 0 1" />
+    
+    <body name="root" pos="0 0 0.65" quat="1 0 0 0"> <freejoint name="root" />
+      <inertial pos="0 0 0" mass="5.0" diaginertia="0.1 0.1 0.1" />
+      <site name="imu" size="0.01" pos="0 0 0" />
+      <geom type="mesh" rgba="1 1 1 1" mesh="base_link" contype="1" conaffinity="0" density="0" group="1" class="visualgeom" />
+      <geom type="mesh" rgba="1 1 1 1" mesh="base_link" />
+      
+      <body name="left_hip_pitch_link" pos="0 0.049 -0.067" quat="-2.59734e-06 2.59735e-06 0.707105 0.707108">
+        <inertial pos="-0.0023863 0 0.0511609" quat="0.999974 0 -0.0072359 0" mass="0.438" diaginertia="0.000389 0.000277 0.000216" />
+        <joint name="left_hip_pitch_joint" pos="0 0 0" axis="0 0 -1" range="-1.57 1.57" actuatorfrcrange="-20 20" />
+        <geom type="mesh" rgba="1 1 1 1" mesh="left_hip_pitch_link" contype="1" conaffinity="0" density="0" group="1" class="visualgeom" />
+        <geom type="mesh" rgba="1 1 1 1" mesh="left_hip_pitch_link" />
+        
+        <body name="left_hip_roll_link" pos="-0.0205 0 0.055" quat="0.707105 0 -0.707108 0">
+          <inertial pos="0.0054951 -0.164853 -0.0187913" quat="0.682348 0.730207 0.0345653 -0.00200213" mass="0.567" diaginertia="0.00257 0.00244 0.000306" />
+          <joint name="left_hip_roll_joint" pos="0 0 0" axis="0 0 -1" range="-1.57 0.4" actuatorfrcrange="-20 20" />
+          <geom type="mesh" rgba="1 1 1 1" mesh="left_hip_roll_link" contype="1" conaffinity="0" density="0" group="1" class="visualgeom" />
+          <geom type="mesh" rgba="1 1 1 1" mesh="left_hip_roll_link" />
+          
+          <body name="left_knee_link" pos="0.0255 -0.2 -0.0205" quat="0.707105 0 0.707108 0">
+            <inertial pos="-0.0037521 -0.171695 -0.0213662" quat="0.569544 0.588656 -0.427962 0.382036" mass="0.283" diaginertia="0.00246 0.00243 0.000108" />
+            <joint name="left_knee_joint" pos="0 0 0" axis="0 0 1" range="-0.2 2.2" actuatorfrcrange="-20 20" />
+            <geom type="mesh" rgba="1 1 1 1" mesh="left_knee_link" contype="1" conaffinity="0" density="0" group="1" class="visualgeom" />
+            <geom type="mesh" rgba="1 1 1 1" mesh="left_knee_link" />
+          </body>
+        </body>
+      </body>
+
+      <body name="right_hip_pitch_link" pos="0 -0.049 -0.067" quat="0 0 -0.707107 0.707107">
+        <inertial pos="-0.0023863 0 0.0511609" quat="0.999974 0 -0.0072359 0" mass="0.438" diaginertia="0.000389 0.000277 0.000216" />
+        <joint name="right_hip_pitch_joint" pos="0 0 0" axis="0 0 -1" range="-1.57 1.57" actuatorfrcrange="-20 20" />
+        <geom type="mesh" rgba="1 1 1 1" mesh="right_hip_pitch_link" contype="1" conaffinity="0" density="0" group="1" class="visualgeom" />
+        <geom type="mesh" rgba="1 1 1 1" mesh="right_hip_pitch_link" />
+        
+        <body name="right_hip_roll_link" pos="-0.0205 0 0.055" quat="-2.59734e-06 0.707105 -2.59735e-06 -0.707108">
+          <inertial pos="-0.0054951 -0.164853 -0.0187913" quat="0.681789 0.731079 -0.00512293 -0.0256989" mass="0.567" diaginertia="0.00257 0.00244 0.000306" />
+          <joint name="right_hip_roll_joint" pos="0 0 0" axis="0 0 -1" range="-0.4 1.57" actuatorfrcrange="-20 20" />
+          <geom type="mesh" rgba="1 1 1 1" mesh="right_hip_roll_link" contype="1" conaffinity="0" density="0" group="1" class="visualgeom" />
+          <geom type="mesh" rgba="1 1 1 1" mesh="right_hip_roll_link" />
+          
+          <body name="right_knee_link" pos="-0.0255 -0.2 -0.0205" quat="0.707105 0 -0.707108 0">
+            <inertial pos="0.0037519 -0.171695 -0.0213662" quat="0.503874 0.553178 -0.473009 0.465154" mass="0.283" diaginertia="0.00245 0.00244 0.000108" />
+            <joint name="right_knee_joint" pos="0 0 0" axis="0 0 1" range="-2.2 0.2" actuatorfrcrange="-20 20" />
+            <geom type="mesh" rgba="1 1 1 1" mesh="right_knee_link" contype="1" conaffinity="0" density="0" group="1" class="visualgeom" />
+            <geom type="mesh" rgba="1 1 1 1" mesh="right_knee_link" />
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position name="left_hip_pitch_joint" joint="left_hip_pitch_joint" kp="40.0" kv="2.0" ctrllimited="true" ctrlrange="-10 10"/>
+    <position name="right_hip_pitch_joint" joint="right_hip_pitch_joint" kp="40.0" kv="2.0" ctrllimited="true" ctrlrange="-10 10"/>
+    <position name="left_hip_roll_joint" joint="left_hip_roll_joint" kp="40.0" kv="2.0" ctrllimited="true" ctrlrange="-10 10"/>
+    <position name="right_hip_roll_joint" joint="right_hip_roll_joint" kp="40.0" kv="2.0" ctrllimited="true" ctrlrange="-10 10"/>
+    <position name="left_knee_joint" joint="left_knee_joint" kp="40.0" kv="2.0" ctrllimited="true" ctrlrange="-10 10"/>
+    <position name="right_knee_joint" joint="right_knee_joint" kp="40.0" kv="2.0" ctrllimited="true" ctrlrange="-10 10"/>
+  </actuator>
+
+  
+
+  
+
+  <sensor>
+    <actuatorpos name="left_hip_pitch_joint_p" actuator="left_hip_pitch_joint" />
+    <actuatorvel name="left_hip_pitch_joint_v" actuator="left_hip_pitch_joint" />
+    <actuatorfrc name="left_hip_pitch_joint_f" actuator="left_hip_pitch_joint" noise="0.001" />
+    <actuatorpos name="left_hip_roll_joint_p" actuator="left_hip_roll_joint" />
+    <actuatorvel name="left_hip_roll_joint_v" actuator="left_hip_roll_joint" />
+    <actuatorfrc name="left_hip_roll_joint_f" actuator="left_hip_roll_joint" noise="0.001" />
+    <actuatorpos name="left_knee_joint_p" actuator="left_knee_joint" />
+    <actuatorvel name="left_knee_joint_v" actuator="left_knee_joint" />
+    <actuatorfrc name="left_knee_joint_f" actuator="left_knee_joint" noise="0.001" />
+    <actuatorpos name="right_hip_pitch_joint_p" actuator="right_hip_pitch_joint" />
+    <actuatorvel name="right_hip_pitch_joint_v" actuator="right_hip_pitch_joint" />
+    <actuatorfrc name="right_hip_pitch_joint_f" actuator="right_hip_pitch_joint" noise="0.001" />
+    <actuatorpos name="right_hip_roll_joint_p" actuator="right_hip_roll_joint" />
+    <actuatorvel name="right_hip_roll_joint_v" actuator="right_hip_roll_joint" />
+    <actuatorfrc name="right_hip_roll_joint_f" actuator="right_hip_roll_joint" noise="0.001" />
+    <actuatorpos name="right_knee_joint_p" actuator="right_knee_joint" />
+    <actuatorvel name="right_knee_joint_v" actuator="right_knee_joint" />
+    <actuatorfrc name="right_knee_joint_f" actuator="right_knee_joint" noise="0.001" />
+    <framequat name="orientation" objtype="site" noise="0.001" objname="imu" />
+    <gyro name="angular_velocity" site="imu" noise="0.005" cutoff="34.9" />
+  </sensor>
+</mujoco>
