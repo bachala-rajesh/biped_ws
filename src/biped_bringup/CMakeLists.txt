@@ -29,6 +29,7 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables (ROS nodes)
 install(PROGRAMS
   biped_bringup/gui_sliders_biped_joints_control.py
+  biped_bringup/reset_world_client.py
   
   DESTINATION lib/${PROJECT_NAME}
 )

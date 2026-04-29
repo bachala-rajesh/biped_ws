@@ -40,11 +40,16 @@
     <camera name="track" mode="trackcom" pos="0 -3.0 1.112" xyaxes="1 0 0 0 0 1" />
     
     <body name="root" pos="0 0 0.65" quat="1 0 0 0"> <freejoint name="root" />
-      <inertial pos="0 0 0" mass="5.0" diaginertia="0.1 0.1 0.1" />
-      <site name="imu" size="0.01" pos="0 0 0" />
+      <inertial pos="0.0 -0.0001528 -0.0041040" mass="2.0725291" fullinertia="0.0145041 0.0118815 0.0059465 0.0 0.0 0.0000062"/>
       <geom type="mesh" rgba="1 1 1 1" mesh="base_link" contype="1" conaffinity="0" density="0" group="1" class="visualgeom" />
       <geom type="mesh" rgba="1 1 1 1" mesh="base_link" />
+
+      <body name="imu_link" pos="0 0 0.05" quat="1 0 0 0">
+        <inertial pos="0 0 0" mass="0.001" diaginertia="0.0001 0.0001 0.0001"/>
+        <site name="imu" size="0.01" pos="0 0 0"/>
+      </body>
       
+
       <body name="left_hip_pitch_link" pos="0 0.049 -0.067" quat="-2.59734e-06 2.59735e-06 0.707105 0.707108">
         <inertial pos="-0.0023863 0 0.0511609" quat="0.999974 0 -0.0072359 0" mass="0.438" diaginertia="0.000389 0.000277 0.000216" />
         <joint name="left_hip_pitch_joint" pos="0 0 0" axis="0 0 -1" range="-1.57 1.57" actuatorfrcrange="-20 20" />
@@ -134,7 +139,7 @@
 <!-- ordered according to the actuators -->
 <keyframe>
   <key name="home"
-       qpos="0 0 0.65  1 0 0 0
+       qpos="0 0 0.59  1 0 0 0
              0.3  0.0   0.6
             -0.3  0.0  -0.6"
        ctrl="0.3 -0.3  0.0 0.0  0.6 -0.6"/>

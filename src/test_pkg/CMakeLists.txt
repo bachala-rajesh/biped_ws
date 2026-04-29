@@ -5,6 +5,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+
+
+# execute_process(
+
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
@@ -13,6 +18,10 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(tf2 REQUIRED)
+
+set(CMAKE_PREFIX_PATH "/usr/local/lib/python3.10/dist-packages/torch/share/cmake")
+find_package(Torch REQUIRED)
+
 
 include_directories(include)
 
@@ -57,9 +66,17 @@ target_link_libraries(read_imu_shared_memory_node
 )
 
 
+add_executable(policy_node src/test_libtorch.cpp)
+target_link_libraries(policy_node "${TORCH_LIBRARIES}")
+set_target_properties(policy_node PROPERTIES
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+
 
 install(TARGETS dummy_imu_shared_memory_node DESTINATION lib/${PROJECT_NAME})
 install(TARGETS read_imu_shared_memory_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS policy_node DESTINATION lib/${PROJECT_NAME})
 
 
 # Install files

@@ -74,7 +74,7 @@ MujocoObservation MujocoSim::get_observation(const std::vector<std::string>& joi
     MujocoObservation obs;
     
     //orientation
-    int orient_sid = mj_name2id(model_, mjOBJ_SENSOR, "orientation");
+    int orient_sid = mj_name2id(model_, mjOBJ_SENSOR, "imu_quat");
     if (orient_sid < 0) {
         throw std::runtime_error("Orientation sensor not found");
     }
@@ -98,7 +98,7 @@ MujocoObservation MujocoSim::get_observation(const std::vector<std::string>& joi
     obs.lin_vel = {v_base.x(), v_base.y(), v_base.z()};
 
     // angular velocity (already in the base frame, from gyro on imu site)
-    int gyro_sid = mj_name2id(model_, mjOBJ_SENSOR, "angular_velocity");
+    int gyro_sid = mj_name2id(model_, mjOBJ_SENSOR, "imu_gyro");
     if (gyro_sid < 0) throw std::runtime_error("Angular velocity sensor not found");
     int gyro_addr = model_->sensor_adr[gyro_sid];
     obs.ang_vel = {data_->sensordata[gyro_addr + 0],
