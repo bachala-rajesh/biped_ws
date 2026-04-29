@@ -59,8 +59,8 @@ int main() {
   int step_counter = 0;
 
   // ---- Prime history ----
-  obs_builder.scale_update_observation(
-      sim.get_observation(joint_names), gait_time, cfg.cmd_vel, last_actions_d);
+  obs_builder.scale_update_observation_history(
+      sim.get_mujoco_data(joint_names), gait_time, cfg.cmd_vel, last_actions_d);
   obs_builder.init_history();
 
   // ---- Verify gains ----
@@ -116,15 +116,10 @@ int main() {
       if (step_counter % cfg.decimation == 0) {
         gait_time += cfg.sim_dt * cfg.decimation;
 
-        auto raw_obs = sim.get_observation(joint_names);
-        obs_builder.scale_update_observation(
-            raw_obs, gait_time, cfg.cmd_vel, last_actions_d);
+        auto raw_sensor_data = sim.get_mujoco_data(joint_names);
+        obs_builder.scale_update_observation_history(
+            raw_sensor_data, gait_time, cfg.cmd_vel, last_actions_d);
 
-        if (raw_obs.fallen) {
-          std::cout << "Robot has fallen down... Exiting\n";
-          running = false;
-          break;
-        }
 
         auto stacked = obs_builder.stacked_observation();
         last_actions = policy.forward(stacked);

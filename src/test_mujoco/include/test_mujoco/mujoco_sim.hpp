@@ -5,21 +5,16 @@
 #include <vector>
 #include <array>
 
+#include "test_mujoco/robot_state_struct.hpp"
 
 namespace test_mujoco {
 
-struct MujocoObservation {
-    std::array<double, 3> proj_gravity;
-    std::array<double, 3> lin_vel;
-    std::array<double, 3> ang_vel;
-    std::vector<double> joint_pos;
-    std::vector<double> joint_vel;
-    bool fallen = false;
-};
+
 
 
 class MujocoSim {
 public:
+
 
     explicit MujocoSim(const std::string& xml_path);
     ~MujocoSim();
@@ -47,7 +42,8 @@ public:
     // set data->ctrl for one actuator by name
     void set_ctrl(const std::string& actuator_name, double value);
 
-    MujocoObservation get_observation(const std::vector<std::string>& joint_names) const;
+    // get sensor data from mujoco
+    RobotSensorData get_mujoco_data(const std::vector<std::string>& joint_names) const;
 
     void set_gains(double stiffness, double damping);
 

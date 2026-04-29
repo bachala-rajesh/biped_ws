@@ -58,12 +58,14 @@ public:
     explicit ObservationBuilder(const Config& cfg);
 
     // read raw state, build and push 
-    void scale_update_observation(const MujocoObservation& raw,
-                      double gait_time,
-                      const std::array<double, 3>& cmd_vel,
-                      const std::vector<double>& last_actions
-                    );
+    void scale_update_observation_history(
+        const RobotSensorData& raw_sensor_data,
+        double gait_time,
+        const std::array<double, 3>& cmd_vel,
+        const std::vector<double>& last_actions) ;
 
+    void form_projected_robot_state(const RobotSensorData& robot_sensor_data, RobotState& obs) const;
+    
     // initialize the history with the first observation
     void init_history();
 
