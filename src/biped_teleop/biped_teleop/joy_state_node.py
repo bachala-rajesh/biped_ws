@@ -26,6 +26,7 @@ class GAMEPAD_DEADZONE:
     JOYSTICK_DEADZONE = 0.2
     BUTTON_DEADZONE = 0.5
     RESTART_BUTTON_HOLD_TIME = 3.0  # seconds
+    DEBOUNCE_TIME = 0.05  # seconds for debouncing
 
 
 class TeleopNode(Node):
@@ -36,6 +37,18 @@ class TeleopNode(Node):
             allow_undeclared_parameters=True,
             automatically_declare_parameters_from_overrides=True,
         )
+        # last published state and current state
+        self.last_published_state = String()
+        self.current_state = String()
+        self.last_state = String()
+
+        self.last_state.data = JOYSTATE.NONE
+        self.current_state.data = JOYSTATE.NONE
+        self.last_published_state.data = JOYSTATE.NONE
+
+        # debounce variables
+        self.state_changed = True
+        self.current_state_init_time = self.get_clock().now()
 
         # intialize joystick mapping parameters
         self.hw_axes = {}
@@ -49,9 +62,6 @@ class TeleopNode(Node):
         # joystick data
         self.joy_msg_timestamp = None
 
-        # message to publish
-        self.state_msg = String()
-
         # callback groups
         self.joy_callback_group = MutuallyExclusiveCallbackGroup()
         self.timer_callback_group = MutuallyExclusiveCallbackGroup()
@@ -63,10 +73,17 @@ class TeleopNode(Node):
         self.joy_state_publisher = self.create_publisher(String, "/joy/state", 10)
 
         # timer
-        self.timer_ = self.create_timer(0.1, self.timer_callback)
+        self.timer_ = self.create_timer(0.05, self.timer_callback)  # 50ms or 20Hz callback
+
+        # initial publish
+        self.initial_publish()
 
         # Logging
         self.get_logger().info("joy state node Ready")
+
+    def initial_publish(self):
+        """Publish the initial state."""
+        self.joy_state_publisher.publish(self.current_state)
 
     def load_joystick_layout(self):
         """Load joystick hardware layout from ROS parameters.
@@ -184,23 +201,40 @@ class TeleopNode(Node):
             self.get_logger().warn("No joystick data received.")
             return
 
+        self.current_state.data = JOYSTATE.NONE
         if self.cmd_map[JOYSTATE.START]["value"] == 1:
-            self.state_msg.data = JOYSTATE.START
+            self.current_state.data = JOYSTATE.START
         elif self.cmd_map[JOYSTATE.STANDBY]["value"] == 1:
-            self.state_msg.data = JOYSTATE.STANDBY
+            self.current_state.data = JOYSTATE.STANDBY
         elif self.cmd_map[JOYSTATE.STOP]["value"] == 1:
-            self.state_msg.data = JOYSTATE.STOP
+            self.current_state.data = JOYSTATE.STOP
         elif self.cmd_map[JOYSTATE.EMERGENCY_STOP]["value"] == 1:
-            self.state_msg.data = JOYSTATE.EMERGENCY_STOP
+            self.current_state.data = JOYSTATE.EMERGENCY_STOP
         elif self.cmd_map[JOYSTATE.TEST_CHECK]["value"] == 1:
-            self.state_msg.data = JOYSTATE.TEST_CHECK
+            self.current_state.data = JOYSTATE.TEST_CHECK
         elif self.cmd_map[JOYSTATE.ACTIVE]["value"] == 1:
-            self.state_msg.data = JOYSTATE.ACTIVE
-        else:
-            self.state_msg.data = JOYSTATE.NONE
+            self.current_state.data = JOYSTATE.ACTIVE
+            
+        if self.current_state.data == JOYSTATE.NONE:
+            self.last_state.data = JOYSTATE.NONE
+            self.joy_state_publisher.publish(self.current_state)
+            return
 
-        # publish the message
-        self.joy_state_publisher.publish(self.state_msg)
+        # check for state change
+        if self.current_state.data != self.last_state.data:
+            self.last_state.data = self.current_state.data
+            self.current_state_init_time = self.get_clock().now()
+            return
+
+        # check for debounce
+        now = self.get_clock().now()
+        dt = (now - self.current_state_init_time).nanoseconds / 1e6
+        if dt >= GAMEPAD_DEADZONE.DEBOUNCE_TIME:
+            # state is stable, publish it
+            self.joy_state_publisher.publish(self.current_state)
+            self.last_published_state.data = self.current_state.data
+            self.state_changed = False
+            self.last_state.data = JOYSTATE.NONE
 
 
 def main(args=None):
