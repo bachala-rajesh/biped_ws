@@ -1,0 +1,10 @@
+dm_imu:
+  ros__parameters:
+    port: /dev/dm_imu
+    baudrate: 921600
+    frame_id: imu_link
+
+
+    # Other
+    qos_reliable: true      # or true, as needed
+    reconnect_interval_sec: 1.0

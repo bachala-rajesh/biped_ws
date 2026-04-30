@@ -7,9 +7,12 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(iceoryx2-cxx REQUIRED)
+find_package(iox2_msgs REQUIRED)
+
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -25,6 +28,29 @@ endif()
 
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
+
+# C++ executables
+add_executable(mujoco_imu_iox2_node src/mujoco_imu_iox2_node.cpp)
+ament_target_dependencies(mujoco_imu_iox2_node
+             rclcpp
+             sensor_msgs
+             iox2_msgs
+)
+target_link_libraries(mujoco_imu_iox2_node
+  iceoryx2-cxx::static-lib-cxx
+)
+
+add_executable(mujoco_imu_iox2_subscriber_node src/mujoco_imu_iox2_subscriber_node.cpp)
+ament_target_dependencies(mujoco_imu_iox2_subscriber_node
+             iox2_msgs
+)
+target_link_libraries(mujoco_imu_iox2_subscriber_node
+  iceoryx2-cxx::static-lib-cxx
+)
+
+install(TARGETS mujoco_imu_iox2_node mujoco_imu_iox2_subscriber_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 # Install Python executables (ROS nodes)
 install(PROGRAMS

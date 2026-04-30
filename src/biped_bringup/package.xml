@@ -9,10 +9,15 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <depend>biped_description</depend>
   <depend>mujoco_ros2_control_msgs</depend>
+  <depend>iceoryx2-cxx</depend>
+  <depend>iox2_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

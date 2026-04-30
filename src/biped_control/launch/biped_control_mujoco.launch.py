@@ -88,7 +88,7 @@ def generate_launch_description():
             ),
             controller_manager_node,
             TimerAction(
-                period=5.0,
+                period=2.0,
                 actions=controller_spawners,
             ),
         ]
