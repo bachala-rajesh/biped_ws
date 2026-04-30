@@ -1,23 +1,33 @@
 <?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>dm_imu</name>
-  <version>0.1.0</version>
-  <description>DM IMU driver (ROS 2 Humble, Python + pyserial)</description>
+  <version>0.0.0</version>
+  <description>IMU driver package migrated to ROS2</description>
+  <maintainer email="dm@todo.todo">dm</maintainer>
+  <license>TODO</license>
 
-  <maintainer email="c1470759@outlook.com">Kielas</maintainer>
-  <license>MIT</license>
+  <!-- ROS2 build工具 -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <buildtool_depend>ament_python</buildtool_depend>
+  <!-- 依赖项 -->
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>serial</depend> <!-- 需要确认ROS2中的对应包名 -->
+  <depend>rcl_interfaces</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  
 
-  <exec_depend>rclpy</exec_depend>
-  <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>iox2_msgs</exec_depend>
+  <!-- 如果使用消息/服务 -->
+  <build_depend>rosidl_default_generators</build_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
-  <!-- 你可以选：apt 或 pip。若用 apt，就保留这行；若打算 pip 安装 pyserial，就把这行删掉改到 setup.py -->
-  <exec_depend>python3-serial</exec_depend>
-
+  <!-- 必须的export标签 -->
   <export>
-    <build_type>ament_python</build_type>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
