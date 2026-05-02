@@ -20,4 +20,12 @@
   <class type="biped_fsm::StopState" base_class_type="yasmin::State">
     <description>Stop State </description>    
   </class>
+  <class type="biped_fsm::MujocoInitState" base_class_type="yasmin::State">
+    <description>Mujoco Init State </description>
+  </class>
+  <class type="biped_fsm::MujocoActiveState" base_class_type="yasmin::State">
+    <description>Mujoco Active State </description>
+  </class>
 </library>
+
+

@@ -39,8 +39,6 @@ TODO:
 
 using namespace iox2;
 
-// global variables
-bool SHUTTING_DOWN = false;
 
 #define IOX_FSM_TOPIC "iox/fsm_data"
 
@@ -52,35 +50,17 @@ public:
 
         // initialize iox node and publisher/subscriber
         init_iox_services();
-        
 
         // callback groups
-        imu_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-        joint_states_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
         common_non_critical_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   
-
         // subscription options- assign callback groups to the subscribers
-        rclcpp::SubscriptionOptions imu_sub_options;
-        imu_sub_options.callback_group = imu_callback_group_;
-        rclcpp::SubscriptionOptions joint_states_sub_options;
-        joint_states_sub_options.callback_group = joint_states_callback_group_;
         rclcpp::SubscriptionOptions joy_cmd_sub_options;
         joy_cmd_sub_options.callback_group = common_non_critical_callback_group_;
         rclcpp::SubscriptionOptions joy_state_sub_options;
         joy_state_sub_options.callback_group = common_non_critical_callback_group_;
 
         // subscribers
-        imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu/data", 
-                                                                    10, 
-                                                                    std::bind(&StateManager::imu_callback, this, std::placeholders::_1),
-                                                                    imu_sub_options
-                                                                    );
-        joint_states_sub_ = this->create_subscription<sensor_msgs::msg::JointState>("/joint_states", 
-                                                                    10, 
-                                                                    std::bind(&StateManager::joint_states_callback, this, std::placeholders::_1),
-                                                                    joint_states_sub_options
-                                                                    );
         joy_cmd_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>("/joy/cmd", 
                                                                     10, 
                                                                     std::bind(&StateManager::joy_cmd_callback, this, std::placeholders::_1),
@@ -97,78 +77,9 @@ public:
         timer_ = this->create_wall_timer( 20ms, std::bind(&StateManager::timer_callback, this), common_non_critical_callback_group_ ); //50Hz timer
     }
 
-    void safe_shutdown() {
-        // stop the robot 
-        RCLCPP_INFO(this->get_logger(), "Shutdown signal received. Stopping the robot safely...");
-        
-        write_stop_state_to_iox();
-        RCLCPP_INFO(this->get_logger(), "destroying the node...");
-    }
-
-    void write_stop_state_to_iox() {
-        SHUTTING_DOWN = true;
-
-        // iox2 data
-        IoxFsmData iox_fsm_data;
-        iox_fsm_data.linear_x = 0.0;
-        iox_fsm_data.linear_y = 0.0;
-        iox_fsm_data.angular_z = 0.0;
-        iox_fsm_data.current_state  = robot_states_enum::RobotState::STOP;
-
-        for (int i = 0; i < 3; ++i) {
-            // publish the iox2 data
-            auto sample = iox_fsm_publisher_->loan_uninit().value();
-            auto initialized_sample = sample.write_payload(iox_fsm_data);
-            send(std::move(initialized_sample)).value();
-        }
-
-        RCLCPP_INFO(this->get_logger(), "Stopping the robot...");
-        std::this_thread::sleep_for(100ms); // small delay to increase chances of the policy receiving the STOP state
-    }
 
 
 private:
-
-    void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg) {
-        
-        // Convert quaternion to roll, pitch, yaw
-        double roll, pitch, yaw;
-        tf2::Quaternion quat(
-            msg->orientation.x,
-            msg->orientation.y,
-            msg->orientation.z,
-            msg->orientation.w
-        );
-        tf2::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-
-        // update the blackboard
-        rclcpp::Time current_time (msg->header.stamp);
-        blackboard_->set<double>("last_imu_time", current_time.seconds());
-        blackboard_->set<double>("imu_roll", roll);
-        blackboard_->set<double>("imu_pitch", pitch);
-        blackboard_->set<double>("imu_yaw", yaw);   
-
-        blackboard_->set<bool>("imu_status", true);
-
-
-
-    }
-
-    void joint_states_callback(const sensor_msgs::msg::JointState::SharedPtr msg) {
-        
-        // create a dictionary and fill it with the joint names and positions
-        std::unordered_map<std::string, float> mapped_dict; 
-        for (size_t i = 0; i < msg->name.size(); ++i) {
-            mapped_dict[msg->name[i]] = msg->position[i];
-        }
-
-        // update the blackboard
-        rclcpp::Time current_time (msg->header.stamp);
-        blackboard_->set<double>("last_joint_states_time", current_time.seconds());
-        blackboard_->set<bool>("joint_states_status", true);
-        blackboard_->set<std::unordered_map<std::string, float>>("joint_positions_dict", mapped_dict);
-
-    }
 
     void joy_cmd_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
         blackboard_->set<bool>("joy_cmd_status", true);
@@ -186,24 +97,12 @@ private:
     }
 
     void timer_callback() {
-        // if the shutdown has started, return 
-        if (SHUTTING_DOWN) {
-            timer_->cancel(); // stop the timer
-            return;
-        }
-
-        // update the current ROS time in the blackboard
-        rclcpp::Time current_time = this->get_clock()->now();
-        blackboard_->set<double>("current_ros_time", current_time.seconds());
-        
-        // fake data for testing
-        fake_sensor_data();
 
         // get the current robot state from the blackboard
         robot_states_enum::RobotState current_robot_state = blackboard_->get<robot_states_enum::RobotState>("robot_state");
 
         // log the current robot state
-        RCLCPP_INFO(this->get_logger(), "Current Robot State: %s", robot_states_enum::get_state_string(current_robot_state).c_str());
+        // RCLCPP_INFO(this->get_logger(), "Current Robot State: %s", robot_states_enum::get_state_string(current_robot_state).c_str());
 
         // iox2 data
         IoxFsmData iox_fsm_data;
@@ -245,42 +144,6 @@ private:
         std::cout << "✅ iox2 Publisher for FSM connected successfully..." << std::endl;
     }
 
-    void fake_sensor_data() {
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        static std::uniform_real_distribution<double> angle_dist(-0.17, 0.17);
-        static std::uniform_real_distribution<double> linear_dist(-1.0, 1.0);
-        static std::uniform_real_distribution<double> angular_dist(-1.0, 1.0);
-
-        // Simulate IMU data
-        auto imu_msg = std::make_shared<sensor_msgs::msg::Imu>();
-        imu_msg->header.stamp = this->get_clock()->now();
-        tf2::Quaternion q;
-        q.setRPY(angle_dist(gen), angle_dist(gen), angle_dist(gen)); // Roll, Pitch, Yaw
-        imu_msg->orientation.x = q.x();
-        imu_msg->orientation.y = q.y();
-        imu_msg->orientation.z = q.z();
-        imu_msg->orientation.w = q.w();
-        imu_callback(imu_msg);
-
-        // joint states data
-        auto joint_states_msg = std::make_shared<sensor_msgs::msg::JointState>();
-        joint_states_msg->header.stamp = this->get_clock()->now();
-        joint_states_callback(joint_states_msg);
-
-        // joy cmd data
-        auto joy_cmd_msg = std::make_shared<geometry_msgs::msg::TwistStamped>();
-        joy_cmd_msg->twist.linear.x = linear_dist(gen);
-        joy_cmd_msg->twist.angular.z = angular_dist(gen);
-        // joy_cmd_callback(joy_cmd_msg);
-
-        // joy state data
-        auto joy_state_msg = std::make_shared<std_msgs::msg::String>();
-        joy_state_msg->data = "start";
-        // joy_state_callback(joy_state_msg);
-
-
-    }
 
 
 
@@ -288,12 +151,8 @@ private:
     //------------------------- variables ------------------------
     rclcpp::TimerBase::SharedPtr timer_;
     std::shared_ptr<yasmin::Blackboard> blackboard_;
-    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
-    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
     rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr joy_cmd_sub_;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr joy_state_sub_;
-    rclcpp::CallbackGroup::SharedPtr imu_callback_group_;
-    rclcpp::CallbackGroup::SharedPtr joint_states_callback_group_;
     rclcpp::CallbackGroup::SharedPtr common_non_critical_callback_group_;
     std::array<float, 3> cmd_vel;
 
@@ -319,24 +178,7 @@ int main(int argc, char **argv) {
     auto state_manager_ros_node = std::make_shared<StateManager>(blackboard);
 
     // -------------------------- set inital values in the blackboard --------------------------
-    // timestamps
-    double start_time = state_manager_ros_node->get_clock()->now().seconds();
-    blackboard->set<double>("last_imu_time", start_time);
-    blackboard->set<double>("last_joint_states_time", start_time);
-    blackboard->set<double>("current_ros_time", start_time);
-
-    // imu angles
-    blackboard->set<double>("imu_roll", 0.0);
-    blackboard->set<double>("imu_pitch", 0.0);
-    blackboard->set<double>("imu_yaw", 0.0);
-
-    // joint angles
-    std::unordered_map<std::string, float> joint_positions_dict;
-    blackboard->set<std::unordered_map<std::string, float>>("joint_positions_dict", joint_positions_dict);
-
     //status flags
-    blackboard->set<bool>("imu_status", false);
-    blackboard->set<bool>("joint_states_status", false);
     blackboard->set<bool>("joy_cmd_status", false);
     blackboard->set<bool>("joy_state_status", false);
 
@@ -346,10 +188,10 @@ int main(int argc, char **argv) {
 
     // -------------------------- create the state machine --------------------------
     const std::string pkg_share = ament_index_cpp::get_package_share_directory("biped_fsm");
-    const std::string xml_path    = pkg_share + "/xml/fsm_states_transistions.xml";
+    const std::string xml_path    = pkg_share + "/xml/mujoco_fsm_states_transistions.xml";
     yasmin_factory::YasminFactory factory;
     auto sm = factory.create_sm_from_file(xml_path);
-    sm->set_sigint_handler(true);
+    sm->set_sigint_handler(false);
 
     // -------------------------- initialize ROS node and executor --------------------------// ros2 demo node
     rclcpp::executors::MultiThreadedExecutor executor;
@@ -376,7 +218,6 @@ int main(int argc, char **argv) {
     
     
     // cleanup
-    state_manager_ros_node->safe_shutdown();
     rclcpp::shutdown();
     executor.cancel();
     executor_thread.join();

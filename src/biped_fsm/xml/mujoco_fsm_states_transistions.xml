@@ -1,0 +1,14 @@
+<StateMachine name="RobotStates"  start_state="INIT" outcomes="SHUTDOWN">
+
+    <State name="INIT" class="biped_fsm::MujocoInitState">
+        <Transition from="ready" to="ACTIVE"/>
+    </State>
+
+
+    <State name="ACTIVE" class="biped_fsm::MujocoActiveState">
+        <Transition from="reset" to="INIT"/>
+    </State>
+
+
+
+</StateMachine>

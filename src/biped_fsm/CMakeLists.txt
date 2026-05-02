@@ -14,6 +14,7 @@ find_package(yasmin REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(yasmin_viewer REQUIRED)
 find_package(yasmin_factory REQUIRED)
+find_package(yasmin_ros REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -21,8 +22,12 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(iox2_msgs REQUIRED)
 find_package(iceoryx2-cxx REQUIRED)
+find_package(mujoco_ros2_control_msgs REQUIRED)
 
-install(DIRECTORY include/
+
+
+install(DIRECTORY 
+          include/
   DESTINATION include
 )
 ament_export_include_directories(include)
@@ -61,6 +66,8 @@ ament_target_dependencies(biped_fsm_plugins
   rclcpp 
   yasmin 
   pluginlib
+  mujoco_ros2_control_msgs
+  yasmin_ros
 )
 
 # Tell ROS 2 where the plugin XML file is
@@ -83,6 +90,7 @@ ament_target_dependencies(state_manager_node
                             yasmin 
                             yasmin_viewer 
                             yasmin_factory
+                            yasmin_ros
                             sensor_msgs
                             std_msgs
                             geometry_msgs
@@ -91,22 +99,41 @@ ament_target_dependencies(state_manager_node
                             )
 
 
-add_executable(test_fsm_shm_node src/test_fsm_shm.cpp)
-ament_target_dependencies(test_fsm_shm_node 
+add_executable(mujoco_state_manager_node src/mujoco_state_manager.cpp)
+target_link_libraries(mujoco_state_manager_node
+  iceoryx2-cxx::static-lib-cxx
+)
+ament_target_dependencies(mujoco_state_manager_node   
                             rclcpp 
                             yasmin 
                             yasmin_viewer 
                             yasmin_factory
+                            yasmin_ros
                             sensor_msgs
                             std_msgs
                             geometry_msgs
                             tf2_ros
-                            ${Boost_LIBRARIES}
+                            iox2_msgs
+                            mujoco_ros2_control_msgs
                             )
+
+# add_executable(test_fsm_shm_node src/test_fsm_shm.cpp)
+# ament_target_dependencies(test_fsm_shm_node 
+#                             rclcpp 
+#                             yasmin 
+#                             yasmin_viewer 
+#                             yasmin_factory
+#                             sensor_msgs
+#                             std_msgs
+#                             geometry_msgs
+#                             tf2_ros
+#                             ${Boost_LIBRARIES}
+#                             )
 
 install(TARGETS
   state_manager_node
-  test_fsm_shm_node
+  mujoco_state_manager_node
+  # test_fsm_shm_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -120,6 +147,7 @@ install(DIRECTORY
 # Install launch files
 install(DIRECTORY
   launch
+  xml
   DESTINATION share/${PROJECT_NAME}/
 )
 
