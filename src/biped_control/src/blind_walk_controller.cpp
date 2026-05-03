@@ -196,6 +196,7 @@ namespace biped_control
   controller_interface::return_type BlindWalkController::update(
     const rclcpp::Time & time, const rclcpp::Duration & /*period*/)
   {
+    int counter = 0;
     // iox2 imu data
     auto imu_sample = iox_imu_subscriber_->receive();
     if (imu_sample.has_value()) {
@@ -203,7 +204,9 @@ namespace biped_control
       if (imu_sample_value.has_value()) {
         const auto& imu = imu_sample_value->payload();
         // debug
-        // RCLCPP_INFO(get_node()->get_logger(), "Received IMU data - Roll: %.2f, Pitch: %.2f, Yaw: %.2f", imu.roll, imu.pitch, imu.yaw);
+        // if (counter%10000 == 0) {
+        //   RCLCPP_INFO(get_node()->get_logger(), "Received IMU data - orientation_x: %.2f, orientation_y: %.2f, orientation_z: %.2f, orientation_w: %.2f", imu.orientation_x, imu.orientation_y, imu.orientation_z, imu.orientation_w);
+        // } 
       } 
     }
 
@@ -214,11 +217,15 @@ namespace biped_control
       if (fsm_sample_value.has_value()) {
         const auto& fsm_data = fsm_sample_value->payload();
         // debug
-        // RCLCPP_INFO(get_node()->get_logger(), "Received FSM data - Current State: %s", robot_states_enum::get_state_string(fsm_data.current_state).c_str());
-        // RCLCPP_INFO(get_node()->get_logger(), "Received FSM data - Linear X: %.2f, Linear Y: %.2f, Angular Z: %.2f", fsm_data.linear_x, fsm_data.linear_y, fsm_data.angular_z);
+        // if (counter%10000 == 0) {
+        //   RCLCPP_INFO(get_node()->get_logger(), "Received FSM data - Current State: %s", robot_states_enum::get_state_string(fsm_data.current_state).c_str());
+        //   RCLCPP_INFO(get_node()->get_logger(), "Received FSM data - Linear X: %.2f, Linear Y: %.2f, Angular Z: %.2f", fsm_data.linear_x, fsm_data.linear_y, fsm_data.angular_z);
+        // } 
+
       }
     }
     
+    counter++;
 
     // get joint states data
     std::vector<double> joint_positions(state_joints_.size());
@@ -233,11 +240,11 @@ namespace biped_control
     }
 
     // debugging
-    for (size_t i = 0; i < state_joints_.size(); ++i)
-    {
-      command_interfaces_[i * CMD_IFC_PER_JOINT].set_value(5.0); // set position command to 5.0 for testing
+    // for (size_t i = 0; i < state_joints_.size(); ++i)
+    // {
+    //   command_interfaces_[i * CMD_IFC_PER_JOINT].set_value(5.0); // set position command to 5.0 for testing
   
-    }
+    // }
     // TODO(anyone): depending on number of interfaces, use definitions, e.g., `CMD_MY_ITFS`,
     // instead of a loop
     if (rt_policy_publisher_ && rt_policy_publisher_->trylock())

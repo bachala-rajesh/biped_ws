@@ -19,5 +19,5 @@ controller_manager:
       - right_knee_joint
     
     
-    initial_joint_positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    initial_joint_positions: [0.3, 0.0, 0.6, -0.3, 0.0, -0.6]
     

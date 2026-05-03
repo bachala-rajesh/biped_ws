@@ -46,6 +46,17 @@ def generate_launch_description() -> LaunchDescription:
             "sim_mode": sim_mode,
         }.items(),
     )
+    
+    
+    # imu iox2 node
+    imu_iox_node = Node(
+        package="biped_bringup",
+        executable="mujoco_imu_iox2_publisher_node",
+        name="biped_imu_iox2_node",
+        output="screen",
+    )
+
+
 
     #####################
     # creating LaunchDescription
@@ -60,5 +71,6 @@ def generate_launch_description() -> LaunchDescription:
             ),
             sim_robot_bringup_node,
             control_node,
+            imu_iox_node,
         ]
     )

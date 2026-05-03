@@ -54,6 +54,20 @@ def generate_launch_description():
         parameters=[{"use_sim_time": use_sim_time}],
         output="screen",
     )
+    
+    blind_walk_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "blind_walk_controller",
+            "--controller-manager",
+            "/controller_manager",
+            "--param-file",
+            controllers_yaml,
+        ],
+        parameters=[{"use_sim_time": use_sim_time}],
+        output="screen",
+    )
 
     imu_sensor_broadcaster_spawner = Node(
         package="controller_manager",
@@ -71,6 +85,7 @@ def generate_launch_description():
 
     controller_spawners = [
         joint_state_broadcaster_spawner,
+        blind_walk_controller_spawner,
         imu_sensor_broadcaster_spawner,
     ]
 

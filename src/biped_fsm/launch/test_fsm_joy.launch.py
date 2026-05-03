@@ -22,7 +22,6 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
     pkg_biped_teleop = get_package_share_directory("biped_teleop")
-    pkg_dm_imu = get_package_share_directory("dm_imu")
 
     # ###############
     # nodes
@@ -38,16 +37,28 @@ def generate_launch_description():
         }.items(),
     )
 
-    # dm_imu node
-    dm_launch_node = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_dm_imu, "launch", "dm_imu.launch.py")
-        ),
+
+    
+    # mujoco fsm state node 
+    mujoco_fsm_state_node = Node(
+        package="biped_fsm",
+        executable="mujoco_state_manager_node",
+        name="mujoco_state_manager_node",
+        output="screen",
+        parameters=[
+            {"use_sim_time": use_sim_time},
+        ],
     )
+    
 
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                "use_sim_time",
+                default_value="true",
+                description="Use simulation clock if true",
+            ),
             teleop_launch_node,
-            dm_launch_node,
+            mujoco_fsm_state_node,
         ]
     )

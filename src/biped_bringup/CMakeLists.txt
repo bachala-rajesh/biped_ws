@@ -30,13 +30,13 @@ endif()
 ament_python_install_package(${PROJECT_NAME})
 
 # C++ executables
-add_executable(mujoco_imu_iox2_node src/mujoco_imu_iox2_node.cpp)
-ament_target_dependencies(mujoco_imu_iox2_node
+add_executable(mujoco_imu_iox2_publisher_node src/mujoco_imu_iox2_publisher_node.cpp)
+ament_target_dependencies(mujoco_imu_iox2_publisher_node
              rclcpp
              sensor_msgs
              iox2_msgs
 )
-target_link_libraries(mujoco_imu_iox2_node
+target_link_libraries(mujoco_imu_iox2_publisher_node
   iceoryx2-cxx::static-lib-cxx
 )
 
@@ -48,7 +48,7 @@ target_link_libraries(mujoco_imu_iox2_subscriber_node
   iceoryx2-cxx::static-lib-cxx
 )
 
-install(TARGETS mujoco_imu_iox2_node mujoco_imu_iox2_subscriber_node
+install(TARGETS mujoco_imu_iox2_publisher_node mujoco_imu_iox2_subscriber_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

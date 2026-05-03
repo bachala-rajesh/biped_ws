@@ -44,23 +44,23 @@ target_link_libraries(test_iox2_imu
   iceoryx2-cxx::static-lib-cxx
 )
 
-add_executable(test_fsm src/test_iox2_fsm.cpp)
-target_include_directories(test_fsm PUBLIC
+add_executable(test_iox2_fsm src/test_iox2_fsm.cpp)
+target_include_directories(test_iox2_fsm PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
-ament_target_dependencies(test_fsm
+ament_target_dependencies(test_iox2_fsm
   rclcpp
   biped_fsm
 )
-target_link_libraries(test_fsm
+target_link_libraries(test_iox2_fsm
   iceoryx2-cxx::static-lib-cxx
 )
 
 # install C++ executables
 install(TARGETS
   test_iox2_imu
-  test_fsm
+  test_iox2_fsm
   DESTINATION lib/${PROJECT_NAME}
 )
 

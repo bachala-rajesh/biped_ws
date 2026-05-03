@@ -10,6 +10,9 @@ controller_manager:
 
     joints_position_controller:
       type: position_controllers/JointGroupPositionController
+        
+    blind_walk_controller:
+      type: biped_control/BlindWalkController
 
 
 
@@ -31,6 +34,20 @@ joints_position_controller:
       - right_knee_joint
 
 
+
+blind_walk_controller:
+  ros__parameters:
+    joints:
+      - left_hip_pitch_joint
+      - left_hip_roll_joint
+      - left_knee_joint
+      - right_hip_pitch_joint
+      - right_hip_roll_joint
+      - right_knee_joint
+    
+    
+    initial_joint_positions: [0.3, 0.0, 0.6, -0.3, 0.0, -0.6]
+    
 
 
 
