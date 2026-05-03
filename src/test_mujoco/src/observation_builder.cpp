@@ -5,13 +5,13 @@
 #include <Eigen/Geometry>
 
 #define FALL_THRESHOLD 0.90
-namespace test_mujoco {
+namespace locomotion {
 
 namespace {
     constexpr double kTwoPi = 6.283185307179586;
 }
 
-ObservationBuilder::ObservationBuilder(const Config& cfg): cfg_(cfg) {
+ObservationBuilder::ObservationBuilder(const PolicyTrainedConfig& cfg): cfg_(cfg) {
         for (const auto& [_, angle] : cfg_.initial_joint_pose) {
             initial_joint_pos_.push_back(angle);
         }
@@ -26,13 +26,13 @@ void ObservationBuilder::push_recent_observation(std::deque<std::vector<double>>
 
 
 
-void ObservationBuilder::form_projected_robot_state(const RobotSensorData& robot_sensor_data, RobotState& obs) const {
+void ObservationBuilder::form_projected_robot_state(const RobotSensorData& robot_sensor_data, RobotStateData& obs) const {
 
     // eigen's quaternoid constructor
-    Eigen::Quaterniond q(robot_sensor_data.imu_quat[0],
-                        robot_sensor_data.imu_quat[1],
-                        robot_sensor_data.imu_quat[2],
-                        robot_sensor_data.imu_quat[3]);
+    Eigen::Quaterniond q(robot_sensor_data.imu_quat.w,
+                        robot_sensor_data.imu_quat.x,
+                        robot_sensor_data.imu_quat.y,
+                        robot_sensor_data.imu_quat.z);
     const Eigen::Quaterniond q_inv = q.conjugate();
 
     // projected gravity (world -> base frame)
@@ -65,7 +65,7 @@ void ObservationBuilder::scale_update_observation_history(
     const std::array<double, 3>& cmd_vel,
     const std::vector<double>& last_actions)  {
 
-        RobotState robot_state;
+        RobotStateData robot_state;
         form_projected_robot_state(raw_sensor_data, robot_state);
 
         // angular velocity scaled

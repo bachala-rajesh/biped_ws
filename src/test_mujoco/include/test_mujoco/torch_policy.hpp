@@ -5,7 +5,7 @@
 
 #include <torch/script.h>
 
-namespace test_mujoco {
+namespace locomotion {
 
 class Policy {
 public:
@@ -18,4 +18,4 @@ private:
   torch::jit::script::Module module_;
 };
 
-}  // namespace test_mujoco
+}  // namespace locomotion

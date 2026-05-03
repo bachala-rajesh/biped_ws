@@ -8,7 +8,7 @@
 
 
 
-namespace test_mujoco {
+namespace locomotion {
 
 
 
@@ -73,16 +73,16 @@ void MujocoSim::set_ctrl(const std::string& actuator_name, double value) {
 RobotSensorData MujocoSim::get_mujoco_data(const std::vector<std::string>& joint_names) const {
     RobotSensorData robot_sensor_data;
     
-    //orientation
+    //orientation. Note: the order is in w, x, y, z form
     int orient_sid = mj_name2id(model_, mjOBJ_SENSOR, "imu_quat");
     if (orient_sid < 0) {
         throw std::runtime_error("Orientation sensor not found");
     }
     int orient_adr = model_->sensor_adr[orient_sid];
-    robot_sensor_data.imu_quat = {data_->sensordata[orient_adr + 0],
-                                data_->sensordata[orient_adr + 1],
-                                data_->sensordata[orient_adr + 2],
-                                data_->sensordata[orient_adr + 3]};
+    robot_sensor_data.imu_quat.w = data_->sensordata[orient_adr + 0];
+    robot_sensor_data.imu_quat.x = data_->sensordata[orient_adr + 1];
+    robot_sensor_data.imu_quat.y = data_->sensordata[orient_adr + 2];
+    robot_sensor_data.imu_quat.z = data_->sensordata[orient_adr + 3];
 
     
   
@@ -125,4 +125,4 @@ void MujocoSim::set_gains(double stiffness, double damping) {
 
 
 
-} // namespace test_mujoco
+} // namespace locomotion

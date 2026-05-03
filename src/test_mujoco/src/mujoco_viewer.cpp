@@ -4,7 +4,7 @@
 #include <string>
 #include <GLFW/glfw3.h>
 
-namespace test_mujoco {
+namespace locomotion {
 
 MujocoViewer::MujocoViewer(mjModel* model, mjData* data, int width, int height, const char* title)
     : model_(model), data_(data) {
@@ -72,4 +72,4 @@ void MujocoViewer::set_camera(double lookat_x,
     cam_.elevation = elevation;
 }
 
-} // namespace test_mujoco
+} // namespace locomotion

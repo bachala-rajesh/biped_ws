@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace test_mujoco {
+namespace locomotion {
 
 Policy::Policy(const std::string& model_path) {
   try {
@@ -37,4 +37,4 @@ std::vector<float> Policy::forward(const std::vector<float>& obs) {
   return std::vector<float>(ptr, ptr + output.numel());
 }
 
-}  // namespace test_mujoco
+}  // namespace locomotion

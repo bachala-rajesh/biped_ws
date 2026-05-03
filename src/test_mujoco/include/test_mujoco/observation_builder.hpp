@@ -4,11 +4,11 @@
 #include <deque>
 #include <vector>
 
-#include <test_mujoco/config.hpp>
-#include <test_mujoco/mujoco_sim.hpp>
+#include <test_mujoco/policy_trained_config.hpp>
+#include <test_mujoco/robot_state_struct.hpp>
 
 
-namespace test_mujoco {
+namespace locomotion {
 
 using Deque = std::deque<std::vector<double>>;
 
@@ -55,7 +55,7 @@ struct ObservationHistory {
 
 class ObservationBuilder {
 public:
-    explicit ObservationBuilder(const Config& cfg);
+    explicit ObservationBuilder(const PolicyTrainedConfig& cfg);
 
     // read raw state, build and push 
     void scale_update_observation_history(
@@ -64,7 +64,7 @@ public:
         const std::array<double, 3>& cmd_vel,
         const std::vector<double>& last_actions) ;
 
-    void form_projected_robot_state(const RobotSensorData& robot_sensor_data, RobotState& obs) const;
+    void form_projected_robot_state(const RobotSensorData& robot_sensor_data, RobotStateData& obs) const;
     
     // initialize the history with the first observation
     void init_history();
@@ -78,7 +78,7 @@ private:
     void push_recent_observation(std::deque<std::vector<double>>& d_history, std::vector<double> recent_data) const; 
 
     // variables
-    Config cfg_;
+    PolicyTrainedConfig cfg_;
     std::vector<double> initial_joint_pos_;
     ObservationHistory obs_history_;
 

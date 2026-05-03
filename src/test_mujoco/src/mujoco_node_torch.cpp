@@ -7,7 +7,7 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-#include "test_mujoco/config.hpp"
+#include "test_mujoco/policy_trained_config.hpp"
 #include "test_mujoco/mujoco_sim.hpp"
 #include "test_mujoco/mujoco_viewer.hpp"
 #include "test_mujoco/observation_builder.hpp"
@@ -20,11 +20,11 @@ int main() {
   const std::string policy_path = pkg_share + "/models/exported/policy.pt";
 
   // ---- Setup ----
-  test_mujoco::Config cfg;
-  test_mujoco::MujocoSim sim(xml_path);
-  test_mujoco::MujocoViewer viewer(sim.model(), sim.data());
-  test_mujoco::ObservationBuilder obs_builder(cfg);
-  test_mujoco::Policy policy(policy_path);
+  locomotion::PolicyTrainedConfig cfg;
+  locomotion::MujocoSim sim(xml_path);
+  locomotion::MujocoViewer viewer(sim.model(), sim.data());
+  locomotion::ObservationBuilder obs_builder(cfg);
+  locomotion::Policy policy(policy_path);
 
   // ---- Set gains to match Python (overrides XML defaults) ----
   sim.set_gains(cfg.stiffness_gain, cfg.damping_gain);

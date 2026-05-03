@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace test_mujoco {
+namespace locomotion {
 
 Policy::Policy(const std::string& model_path, bool use_gpu)
     : env_(ORT_LOGGING_LEVEL_WARNING, "policy"),
@@ -105,4 +105,4 @@ std::vector<float> Policy::forward(const std::vector<float>& obs) {
   return std::vector<float>(out_ptr, out_ptr + out_size);
 }
 
-}  // namespace test_mujoco
+}  // namespace locomotion

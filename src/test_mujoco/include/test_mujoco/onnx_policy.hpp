@@ -6,7 +6,7 @@
 
 #include <onnxruntime_cxx_api.h>
 
-namespace test_mujoco {
+namespace locomotion {
 
 class Policy {
 public:
@@ -26,4 +26,4 @@ private:
   std::vector<int64_t> input_shape_;
 };
 
-}  // namespace test_mujoco
+}  // namespace locomotion

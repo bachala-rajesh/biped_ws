@@ -7,7 +7,7 @@
 
 #include "test_mujoco/robot_state_struct.hpp"
 
-namespace test_mujoco {
+namespace locomotion {
 
 
 
@@ -54,4 +54,4 @@ private:
     mjData* data_;
 };
 
-} // namespace test_mujoco
+} // namespace locomotion

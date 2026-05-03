@@ -4,7 +4,7 @@
 
 struct GLFWwindow;
 
-namespace test_mujoco {
+namespace locomotion {
 
 class MujocoViewer {
 public:
@@ -35,4 +35,4 @@ private:
     mjrContext con_;
 };
 
-} // namespace test_mujoco  
+} // namespace locomotion
