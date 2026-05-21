@@ -5,6 +5,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# setting path for finding torch
+set(CMAKE_PREFIX_PATH "/usr/local/lib/python3.10/dist-packages/torch/share/cmake")
+
+
+
 # =============== find dependencies ================
 # uncomment the following section in order to fill in
 # further dependencies manually.
@@ -23,6 +28,26 @@ find_package(parameter_traits REQUIRED)
 find_package(generate_parameter_library REQUIRED)
 find_package(iox2_msgs REQUIRED)
 find_package(iceoryx2-cxx REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(Torch REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_library(MUJOCO_LIBRARY
+  NAMES mujoco
+  PATHS /usr/local/lib
+  REQUIRED
+)
+
+find_path(MUJOCO_INCLUDE_DIR
+  NAMES mujoco/mujoco.h
+  PATHS /usr/local/include
+  REQUIRED
+)
+find_library(ONNXRUNTIME_LIBRARY
+  NAMES onnxruntime
+  PATHS /usr/local/lib
+  REQUIRED
+)
+
 
 
 # ============== generate parameter library ================
@@ -35,6 +60,8 @@ generate_parameter_library(
 add_library(blind_walk_controller
   SHARED
   src/blind_walk_controller.cpp
+  src/observation_builder.cpp
+  src/torch_policy.cpp
 )
 # link the parameter library to the controller library
 target_link_libraries(blind_walk_controller
@@ -46,7 +73,9 @@ target_include_directories(blind_walk_controller
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
-)
+  ${MUJOCO_INCLUDE_DIR}
+  ${EIGEN3_INCLUDE_DIR}
+  )
 # link dependencies for the controller library
 ament_target_dependencies(blind_walk_controller
   controller_interface
@@ -63,6 +92,15 @@ ament_target_dependencies(blind_walk_controller
   generate_parameter_library
   iox2_msgs
 )
+target_link_libraries(blind_walk_controller 
+            ${MUJOCO_LIBRARY} 
+            ${TORCH_LIBRARIES}
+)
+set_target_properties(blind_walk_controller PROPERTIES
+            INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+        
 
 
 
@@ -96,6 +134,7 @@ install(FILES
 install(DIRECTORY
   launch
   config
+  models
   DESTINATION share/${PROJECT_NAME}/
 )
 

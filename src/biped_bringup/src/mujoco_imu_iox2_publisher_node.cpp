@@ -14,7 +14,7 @@ public:
   MujocoImuIoX2Node() : Node("mujoco_imu_iox2_node")
   {
     subscription_ = this->create_subscription<sensor_msgs::msg::Imu>(
-      "/imu_sensor_broadcaster/imu", 10,
+      "/imu/data", 10,
       std::bind(&MujocoImuIoX2Node::imu_callback, this, std::placeholders::_1));
 
     init_iox_services();  

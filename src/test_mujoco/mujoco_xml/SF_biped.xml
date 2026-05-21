@@ -1,5 +1,5 @@
 <mujoco model="SF_bipedal">
-  <option iterations="50" timestep="0.002" solver="PGS" gravity="0 0 -9.81" />
+  <option iterations="50" timestep="0.005" solver="PGS" gravity="0 0 -9.81" />
 
   <compiler angle="radian" meshdir="meshes" eulerseq="zyx" autolimits="true" />
 
@@ -93,10 +93,10 @@
 
   <actuator>
     <position name="left_hip_pitch_joint"  joint="left_hip_pitch_joint"  kp="40.0" kv="2.0" ctrlrange="-1.57 1.57"/>
-    <position name="right_hip_pitch_joint" joint="right_hip_pitch_joint" kp="40.0" kv="2.0" ctrlrange="-1.57 1.57"/>
     <position name="left_hip_roll_joint"   joint="left_hip_roll_joint"   kp="40.0" kv="2.0" ctrlrange="-1.57 0.4"/>
-    <position name="right_hip_roll_joint"  joint="right_hip_roll_joint"  kp="40.0" kv="2.0" ctrlrange="-0.4 1.57"/>
     <position name="left_knee_joint"       joint="left_knee_joint"       kp="40.0" kv="2.0" ctrlrange="-0.2 2.2"/>
+    <position name="right_hip_pitch_joint" joint="right_hip_pitch_joint" kp="40.0" kv="2.0" ctrlrange="-1.57 1.57"/>
+    <position name="right_hip_roll_joint"  joint="right_hip_roll_joint"  kp="40.0" kv="2.0" ctrlrange="-0.4 1.57"/>
     <position name="right_knee_joint"      joint="right_knee_joint"      kp="40.0" kv="2.0" ctrlrange="-2.2 0.2"/>
   </actuator>
 

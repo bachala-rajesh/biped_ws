@@ -37,7 +37,8 @@ def generate_launch_description():
         ],
         output="screen",
         emulate_tty=True,
-        remappings=[("~/robot_description", "/robot_description")],
+        remappings=[("~/robot_description", "/robot_description"), ("/imu_sensor_broadcaster/imu", "/imu/data")],
+        
         on_exit=Shutdown(),
         condition=IfCondition(PythonExpression(["'", sim_mode, "' != 'gazebo'"])),
     )
@@ -79,6 +80,7 @@ def generate_launch_description():
             "--param-file",
             controllers_yaml,
         ],
+
         parameters=[{"use_sim_time": use_sim_time}],
         output="screen",
     )

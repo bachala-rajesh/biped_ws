@@ -109,8 +109,36 @@ set_target_properties(mujoco_node_onnx PROPERTIES
 )
 
 
-install(TARGETS 
+# Add node mujoco_node_torch_fix_loop (per-step 200 Hz pacing)
+add_executable(mujoco_node_torch_fix_loop
+                    src/mujoco_node_torch_fix_loop.cpp
+                    src/mujoco_viewer.cpp
+                    src/mujoco_sim.cpp
+                    src/observation_builder.cpp
+                    src/torch_policy.cpp
+              )
+target_include_directories(mujoco_node_torch_fix_loop
+          PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+            ${MUJOCO_INCLUDE_DIR}
+            ${EIGEN3_INCLUDE_DIR})
+ament_target_dependencies(mujoco_node_torch_fix_loop
+            "rclcpp"
+            "ament_index_cpp"
+)
+target_link_libraries(mujoco_node_torch_fix_loop
+            ${MUJOCO_LIBRARY}
+            glfw OpenGL::GL
+            ${TORCH_LIBRARIES}
+          )
+set_target_properties(mujoco_node_torch_fix_loop PROPERTIES
+            INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+install(TARGETS
       mujoco_node_torch
+      mujoco_node_torch_fix_loop
       mujoco_node_onnx
   DESTINATION lib/${PROJECT_NAME})
 

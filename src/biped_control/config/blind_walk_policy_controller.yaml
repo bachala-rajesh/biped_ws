@@ -8,7 +8,7 @@ controller_manager:
     blind_walk_controller:
       type: biped_control/BlindWalkController
 
-/blind_walk_controller:
+blind_walk_controller:
   ros__parameters:
     joints:
       - left_hip_pitch_joint
@@ -17,7 +17,6 @@ controller_manager:
       - right_hip_pitch_joint
       - right_hip_roll_joint
       - right_knee_joint
-    
-    
-    initial_joint_positions: [0.3, 0.0, 0.6, -0.3, 0.0, -0.6]
+
+    initial_joint_positions: [0.3, -0.3, 0.0, 0.0, 0.6, -0.6]
     

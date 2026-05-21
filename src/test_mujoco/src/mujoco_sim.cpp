@@ -119,7 +119,7 @@ void MujocoSim::set_gains(double stiffness, double damping) {
   for (int i = 0; i < model_->nu; ++i) {
     model_->actuator_gainprm[i * 10 + 0] = stiffness;
     model_->actuator_biasprm[i * 10 + 1] = -stiffness;  // position feedback
-    model_->actuator_biasprm[i * 10 + 2] = damping;      // velocity feedback
+    model_->actuator_biasprm[i * 10 + 2] = -damping;    // velocity damping (must be negative)
   }
 }
 

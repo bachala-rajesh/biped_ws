@@ -23,7 +23,7 @@ def generate_launch_description() -> LaunchDescription:
     # launch arguments and configurations related
     #####################
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
-    sim_mode = LaunchConfiguration("sim_mode", default="isaacsim")
+    sim_mode = LaunchConfiguration("sim_mode", default="mujoco")
 
     #####################
     # Nodes

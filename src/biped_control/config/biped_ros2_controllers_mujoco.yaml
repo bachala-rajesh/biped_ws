@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 100
+    update_rate: 200
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -44,8 +44,7 @@ blind_walk_controller:
       - right_hip_pitch_joint
       - right_hip_roll_joint
       - right_knee_joint
-    
-    
+
     initial_joint_positions: [0.3, 0.0, 0.6, -0.3, 0.0, -0.6]
     
 

@@ -84,11 +84,11 @@ include_directories(include)
 add_executable(state_manager_node src/state_manager.cpp)
 target_link_libraries(state_manager_node
   iceoryx2-cxx::static-lib-cxx
+  yasmin_viewer::yasmin_viewer
 )
-ament_target_dependencies(state_manager_node 
-                            rclcpp 
-                            yasmin 
-                            yasmin_viewer 
+ament_target_dependencies(state_manager_node
+                            rclcpp
+                            yasmin
                             yasmin_factory
                             yasmin_ros
                             sensor_msgs
@@ -102,11 +102,11 @@ ament_target_dependencies(state_manager_node
 add_executable(mujoco_state_manager_node src/mujoco_state_manager.cpp)
 target_link_libraries(mujoco_state_manager_node
   iceoryx2-cxx::static-lib-cxx
+  yasmin_viewer::yasmin_viewer
 )
-ament_target_dependencies(mujoco_state_manager_node   
-                            rclcpp 
-                            yasmin 
-                            yasmin_viewer 
+ament_target_dependencies(mujoco_state_manager_node
+                            rclcpp
+                            yasmin
                             yasmin_factory
                             yasmin_ros
                             sensor_msgs

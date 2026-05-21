@@ -13,16 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//
+// Source of this file are templates in
+// [RosTeamWorkspace](https://github.com/StoglRobotics/ros_team_workspace) repository.
+//
+
 #ifndef BIPED_CONTROL__BLIND_WALK_CONTROLLER_HPP_
 #define BIPED_CONTROL__BLIND_WALK_CONTROLLER_HPP_
 
-#include <algorithm>
-#include <array>
-#include <cmath>
 #include <memory>
-#include <optional>
 #include <string>
+#include <thread>
 #include <vector>
+#include <optional>
+#include "iox2/iceoryx2.hpp"
+#include "iox2_msgs/iox_imu_msgs.hpp"
+#include "iox2_msgs/iox_fsm_states_msg.hpp"
+#include <ament_index_cpp/get_package_share_directory.hpp>
+
 
 #include "controller_interface/controller_interface.hpp"
 #include <biped_control/blind_walk_controller_parameters.hpp>
@@ -38,19 +46,26 @@
 #include "biped_control/observation_builder.hpp"
 #include "biped_control/torch_policy.hpp"
 
-#include "iox2/iceoryx2.hpp"
-#include "iox2_msgs/iox_imu_msgs.hpp"
-#include "iox2_msgs/iox_fsm_states_msg.hpp"
-#include <ament_index_cpp/get_package_share_directory.hpp>
+
+
+
+// TODO(anyone): Replace with controller specific messages
+
+using namespace iox2;
 
 namespace biped_control
 {
-  static constexpr size_t STATE_POS_ITFS = 0;   // position state index
-  static constexpr size_t STATE_VEL_ITFS = 1;   // velocity state index
-  static constexpr size_t CMD_POS_ITFS = 0;     // position command index
+  // name constants for state interfaces
+  static constexpr size_t STATE_POS_ITFS = 0;   //position state index
+  static constexpr size_t STATE_VEL_ITFS = 1;   //velocity state index
+
+  // name constants for command interfaces
+  static constexpr size_t CMD_POS_ITFS = 0;     //position command
 
   static constexpr size_t CMD_IFC_PER_JOINT = 1;
   static constexpr size_t STATE_IFC_PER_JOINT = 2;
+
+
 
   class BlindWalkController : public controller_interface::ControllerInterface
   {
@@ -75,51 +90,60 @@ namespace biped_control
     controller_interface::return_type update(
       const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
+    
   private:
     controller_interface::CallbackReturn init_iox2_services();
     void resize_ros_biped_msgs_based_on_joints();
     void form_initial_policy_observation();
     void get_iox_imu_data(locomotion::RobotSensorData& robot_sensor_data, bool& imu_available);
     void get_iox_fsm_data(
-      std::array<double, 3>& cmd_vel,
-      robot_states_enum::RobotState& fsm_state,
-      bool& fsm_available);
+          std::array<double, 3>& cmd_vel, 
+          robot_states_enum::RobotState& fsm_state,
+          bool& fsm_available);
     void get_joint_states_data(locomotion::RobotSensorData& robot_sensor_data, bool& joints_data_available);
 
-    // parameters
+
+    
+    // variables
     std::shared_ptr<blind_walk_controller::ParamListener> param_listener_;
     blind_walk_controller::Params params_;
-
-    // ROS publishers
+    
+    // ros2 publisher and real time publisher
     using BipedJointCommand = biped_msgs::msg::BipedJointCommand;
     using ControllerCommandPublisher = realtime_tools::RealtimePublisher<BipedJointCommand>;
     rclcpp::Publisher<BipedJointCommand>::SharedPtr ros_policy_publisher_;
     std::unique_ptr<ControllerCommandPublisher> rt_policy_publisher_;
     BipedJointCommand policy_commands_msg_;
-
-    // joint names for state reading
+    
+    
+    // internal state variables
+    std::vector<double> initial_joint_positions_;
     std::vector<std::string> state_joints_;
-
-    // sensor availability flags
+    
+    // sensor data availability flags
     bool imu_available_ = false;
     bool fsm_available_ = false;
     bool joints_data_available_ = false;
-
-    // iceoryx2 subscribers
+    
+    // iox2 related variables
     std::optional<iox2::Node<iox2::ServiceType::Ipc>> iox_node_;
     std::optional<iox2::Subscriber<iox2::ServiceType::Ipc, IoxImuData, void>> iox_imu_subscriber_;
     std::optional<iox2::Subscriber<iox2::ServiceType::Ipc, IoxFsmData, void>> iox_fsm_subscriber_;
-
-    // policy / control state
+    
+    // policy related variables
     robot_states_enum::RobotState fsm_state_ = robot_states_enum::RobotState::INIT;
     locomotion::RobotSensorData robot_sensor_data_;
     locomotion::PolicyTrainedConfig cfg_;
     std::unique_ptr<locomotion::ObservationBuilder> obs_builder_;
     std::unique_ptr<locomotion::Policy> policy_;
     std::vector<double> last_actions_;
+    std::vector<double> scaled_last_actions_;
     double gait_time_ = 0.0;
     std::array<double, 3> cmd_vel_ = {0.0, 0.0, 0.0};
     size_t counter_ = 0;
+    
+
+
   };
 
 }  // namespace biped_control
