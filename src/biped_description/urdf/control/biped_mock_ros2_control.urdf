@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<robot name="bipedal_robot">
+  <!-- Mock Hardware URDF for Testing -->
+  
+  <ros2_control name="mock_biped_ros2_control" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+      <!-- 
+        Mock hardware parameters:
+        - calculate_dynamics: If true, simulates simple physics
+        - mock_sensor_commands: If true, mirrors commands to state immediately
+      -->
+      <param name="calculate_dynamics">true</param>
+      <param name="mock_sensor_commands">false</param>
+    </hardware>
+
+    <!-- Left Leg Joints -->
+    <joint name="left_hip_pitch_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+    
+    <joint name="left_hip_roll_joint">      
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+    
+    <joint name="left_knee_joint">      
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+
+    <!-- Right Leg Joints -->
+    <joint name="right_hip_pitch_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+    
+    <joint name="right_hip_roll_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+    
+    <joint name="right_knee_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+
+  </ros2_control>
+
+</robot>
