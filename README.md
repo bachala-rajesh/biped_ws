@@ -5,6 +5,13 @@ deployed through ros2_control on real hardware, MuJoCo, Gazebo, and Isaac Sim.
 
 ## About
 
+The walking policy is trained in a separate workspace,
+[biped_RL](https://github.com/bachala-rajesh/biped_RL) (Isaac Lab +
+RSL-RL PPO, with MuJoCo sim2sim validation) — this repo is where the
+trained policy gets deployed. Exported `policy.pt`/`policy.onnx` files from
+`biped_RL` are dropped into `biped_control/models/exported/` and
+`test_mujoco/models/exported/` here.
+
 The robot walks using a policy trained in **Isaac Lab**, then deployed as a
 `libtorch`/ONNX model inside a custom **ros2_control** controller
 (`biped_control`, `BlindWalkController`). A **YASMIN** finite state machine
@@ -24,6 +31,16 @@ Two independent test paths exist for a freshly exported policy: `test_mujoco`
 stack (`biped_bringup` + `biped_control` + `biped_fsm`). See
 [Where to look next](#where-to-look-next) for the file that documents this in
 detail.
+
+### Demo
+
+Trained policy walking on rough terrain, in Isaac Lab (trained in `biped_RL`,
+same policy deployed here):
+
+[▶ resources/biped_rough_isaaclab.webm](resources/biped_rough_isaaclab.webm)
+
+(GitHub doesn't render `<video>` tags inline for files committed to the repo —
+click the link above to play it on GitHub's file page.)
 
 ---
 
@@ -127,3 +144,4 @@ debugging tips.
 | Full architecture — control path, FSM, iceoryx2, hardware interface | `CLAUDE.md` (local, gitignored) |
 | iceoryx2 install recipe | `src/TODO.md` (local, gitignored) |
 | Package-specific detail | `<package>/README.md` |
+| How the policy was trained | [biped_RL](https://github.com/bachala-rajesh/biped_RL) |
