@@ -9,5 +9,8 @@ __pycache__/
 
 
 src/temp/
+src/zzz/
 TODO.md
-
+CLAUDE.md
+cpp_result.py
+python_result.py
